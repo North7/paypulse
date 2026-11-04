@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>薪跳 PayPulse · 上班鼓勵器</title>
+<meta name="description" content="薪跳 PayPulse：即時顯示你今天賺了多少錢的上班鼓勵器。每一秒，都在為你入帳。">
+<meta name="theme-color" content="#09090b">
+<meta property="og:title" content="薪跳 PayPulse · 上班鼓勵器">
+<meta property="og:description" content="每一秒，都在為你入帳。即時看見你的薪水跳動。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23f8e6b0'/%3E%3Cstop offset='1' stop-color='%23c8973f'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2309090b'/%3E%3Cpath d='M8 34h12l5-12 8 22 6-16 4 6h13' fill='none' stroke='url(%23g)' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700&text=薪跳&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#09090b;
+  --panel:rgba(255,255,255,.028);
+  --panel-2:rgba(255,255,255,.05);
+  --line:rgba(255,255,255,.075);
+  --line-2:rgba(255,255,255,.13);
+  --text:#f3efe6;
+  --muted:#8c877b;
+  --dim:#5d5a52;
+  --gold:#e2bd68;
+  --gold-hi:#fbecc0;
+  --gold-lo:#a9792b;
+  --green:#6fd8a4;
+  --coral:#ff8a6b;
+  --radius:22px;
+  --num:"Inter",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --zh:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{color-scheme:dark}
+body{
+  min-height:100vh;background:var(--bg);color:var(--text);
+  font-family:var(--num),var(--zh);font-feature-settings:"tnum" 1,"cv11" 1;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+body::before{ /* ambient glow */
+  content:"";position:fixed;inset:-20vh -10vw auto;height:90vh;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(50% 60% at 50% 0%,rgba(226,189,104,.16),transparent 70%),
+    radial-gradient(30% 40% at 85% 20%,rgba(226,189,104,.06),transparent 70%),
+    radial-gradient(30% 40% at 10% 30%,rgba(120,140,255,.04),transparent 70%);
+}
+body::after{ /* film grain */
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 24px 56px}
+
+/* ---------- header ---------- */
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
+.brand svg{width:38px;height:38px}
+.brand-name{font-family:"Noto Serif TC",var(--zh);font-weight:700;font-size:22px;letter-spacing:.06em;line-height:1}
+.brand-sub{font-size:10px;letter-spacing:.38em;color:var(--muted);margin-top:5px;font-weight:500}
+.actions{display:flex;gap:8px}
+.icon-btn{
+  height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);
+  color:var(--text);display:inline-flex;align-items:center;gap:8px;cursor:pointer;font:500 13px var(--zh);
+  transition:border-color .2s,background .2s,transform .15s;backdrop-filter:blur(12px);
+}
+.icon-btn:hover{border-color:var(--line-2);background:var(--panel-2)}
+.icon-btn:active{transform:scale(.97)}
+.icon-btn svg{width:16px;height:16px;opacity:.85}
+.icon-btn.on{border-color:rgba(226,189,104,.45);color:var(--gold-hi)}
+
+/* ---------- card ---------- */
+.card{
+  position:relative;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+  border:1px solid var(--line);border-radius:var(--radius);padding:24px;
+  box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 30px 60px -30px rgba(0,0,0,.6);
+}
+.eyebrow{font:500 12px var(--zh);color:var(--muted);letter-spacing:.14em;display:flex;align-items:center;gap:8px}
+.eyebrow svg{width:14px;height:14px;opacity:.7}
+
+/* ---------- hero ---------- */
+.hero{padding:34px 40px 30px;overflow:hidden;border-color:rgba(226,189,104,.16)}
+.hero::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(70% 90% at 50% 120%,rgba(226,189,104,.12),transparent 60%);
+}
+.hero-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:34px}
+.status{display:inline-flex;align-items:center;gap:10px;padding:7px 14px 7px 12px;border-radius:999px;
+  background:rgba(111,216,164,.08);border:1px solid rgba(111,216,164,.22);font:500 13px var(--zh);color:var(--green)}
+.status .dot{width:8px;height:8px;border-radius:50%;background:currentColor;position:relative}
+.status .dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid currentColor;animation:ping 1.6s cubic-bezier(.2,.6,.3,1) infinite}
+.status[data-k="lunch"]{color:#f3c76b;background:rgba(243,199,107,.08);border-color:rgba(243,199,107,.22)}
+.status[data-k="before"],.status[data-k="after"],.status[data-k="rest"]{color:var(--muted);background:var(--panel);border-color:var(--line)}
+.status[data-k="before"] .dot::after,.status[data-k="after"] .dot::after,.status[data-k="rest"] .dot::after{display:none}
+@keyframes ping{0%{transform:scale(.6);opacity:.9}100%{transform:scale(2.1);opacity:0}}
+.clock{font:400 13px var(--num);color:var(--muted);letter-spacing:.04em}
+.clock b{color:var(--text);font-weight:500;margin-left:6px}
+
+.amount-label{font:500 14px var(--zh);color:var(--muted);letter-spacing:.3em;margin-bottom:6px}
+.amount-row{position:relative;display:flex;align-items:flex-start;line-height:1;margin-left:-4px}
+.amount{
+  display:flex;align-items:baseline;font-family:var(--num);font-weight:200;
+  font-size:clamp(64px,13vw,148px);letter-spacing:-.045em;white-space:nowrap;
+  background:linear-gradient(180deg,#fff8e3 0%,#f3d68f 42%,#d2a24c 72%,#9b6d24 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 6px 40px rgba(226,189,104,.22));
+  transition:filter .4s;
+}
+.amount .cur{font-size:.3em;font-weight:400;letter-spacing:.02em;align-self:flex-start;margin:.28em .22em 0 0;opacity:.9}
+.amount .dec{font-size:.4em;font-weight:300;letter-spacing:-.01em;opacity:.78;margin-left:.04em}
+.plus{position:absolute;left:var(--x,60%);top:0;font:500 18px var(--num);color:var(--gold-hi);pointer-events:none;
+  animation:rise 1.6s cubic-bezier(.2,.7,.2,1) forwards;text-shadow:0 0 18px rgba(226,189,104,.6)}
+@keyframes rise{0%{transform:translateY(20px);opacity:0}15%{opacity:1}100%{transform:translateY(-44px);opacity:0}}
+
+.ecg{display:block;width:100%;height:46px;margin:18px 0 18px}
+.ecg .base{stroke:rgba(226,189,104,.16)}
+.ecg .beat{stroke:url(#ecgGrad);stroke-dasharray:110 1090;animation:beat 2.4s linear infinite;filter:drop-shadow(0 0 6px rgba(226,189,104,.7))}
+.idle .ecg .beat{animation-play-state:paused;opacity:0}
+@keyframes beat{from{stroke-dashoffset:1200}to{stroke-dashoffset:0}}
+
+.rates{display:flex;flex-wrap:wrap;gap:10px 26px;font:400 14px var(--zh);color:var(--muted)}
+.rates span b{font:500 14px var(--num);color:var(--text);margin-left:6px}
+.quip{margin-top:18px;padding-top:18px;border-top:1px dashed var(--line);font:400 15px/1.6 var(--zh);color:#cfc9bb}
+.quip em{font-style:normal;color:var(--gold-hi);font-family:var(--num),var(--zh);font-weight:500}
+
+/* ---------- grid ---------- */
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;margin-top:16px}
+.c4{grid-column:span 4}.c5{grid-column:span 5}.c7{grid-column:span 7}.c8{grid-column:span 8}.c3{grid-column:span 3}.c6{grid-column:span 6}
+
+.countdown{display:flex;flex-direction:column;justify-content:space-between}
+.cd-time{font:200 clamp(44px,6vw,60px)/1 var(--num);letter-spacing:-.03em;margin:22px 0 10px;display:flex;align-items:baseline;gap:2px}
+.cd-time i{font-style:normal;color:var(--dim);font-weight:200;margin:0 1px}
+.cd-sub{font:400 13px var(--zh);color:var(--muted)}
+
+.progress-head{display:flex;justify-content:space-between;align-items:flex-start}
+.pct{font:200 44px/1 var(--num);letter-spacing:-.03em}
+.pct small{font-size:.45em;color:var(--muted);margin-left:2px}
+.track{position:relative;height:12px;border-radius:999px;background:rgba(255,255,255,.06);margin:30px 0 12px;overflow:visible}
+.track .fill{position:absolute;inset:0 auto 0 0;border-radius:inherit;background:linear-gradient(90deg,#8a6324,var(--gold) 70%,var(--gold-hi));box-shadow:0 0 22px rgba(226,189,104,.35);transition:width .5s}
+.track .lunch{position:absolute;top:0;bottom:0;border-radius:3px;background:repeating-linear-gradient(135deg,rgba(9,9,11,.7) 0 3px,transparent 3px 6px);border-left:1px solid rgba(9,9,11,.6);border-right:1px solid rgba(9,9,11,.6)}
+.track .now{position:absolute;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:var(--gold-hi);box-shadow:0 0 0 5px rgba(226,189,104,.18),0 0 18px rgba(226,189,104,.8);transition:left .5s}
+.ticks{position:relative;height:16px;font:400 12px var(--num);color:var(--muted)}
+.ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.ticks span:first-child{transform:none}.ticks span:last-child{transform:translateX(-100%)}
+.progress-foot{margin-top:16px;font:400 13px var(--zh);color:var(--muted)}
+.progress-foot b{font:500 13px var(--num);color:var(--text)}
+
+.stat .v{font:300 30px/1.1 var(--num);letter-spacing:-.02em;margin-top:16px;white-space:nowrap}
+.stat .v small{font-size:.5em;color:var(--muted);font-weight:400;margin-right:3px;letter-spacing:0}
+.stat .s{font:400 12px/1.5 var(--zh);color:var(--muted);margin-top:8px}
+.stat.gold .v{color:var(--gold-hi)}
+
+/* goals */
+.goals{list-style:none;margin-top:18px;display:flex;flex-direction:column;gap:12px}
+.goal{display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:12px}
+.goal .ico{width:30px;height:30px;border-radius:9px;background:var(--panel-2);display:grid;place-items:center;font-size:15px}
+.goal .name{font:400 14px var(--zh);display:flex;justify-content:space-between;gap:10px}
+.goal .name small{font:400 12px var(--num);color:var(--muted)}
+.goal .bar{height:4px;border-radius:999px;background:rgba(255,255,255,.06);margin-top:7px;overflow:hidden}
+.goal .bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--gold-lo),var(--gold))}
+.goal .tag{font:500 12px var(--zh);color:var(--muted);min-width:88px;text-align:right;white-space:nowrap}
+.goal.done .tag{color:var(--green)}
+.goal.done .bar i{background:linear-gradient(90deg,#3c9b6e,var(--green))}
+.goal.next .name{color:var(--gold-hi)}
+.goal.next .tag{color:var(--gold-hi)}
+
+/* fish */
+.fish{display:flex;flex-direction:column;transition:border-color .3s,box-shadow .3s}
+.fish.active{border-color:rgba(111,216,164,.35);box-shadow:0 0 0 1px rgba(111,216,164,.12) inset,0 30px 70px -30px rgba(111,216,164,.25)}
+.fish .badge{display:none;margin-left:auto;font:500 11px var(--zh);color:var(--green);padding:3px 10px;border-radius:999px;background:rgba(111,216,164,.1);letter-spacing:.1em}
+.fish.active .badge{display:inline-block}
+.fish-amt{font:200 52px/1 var(--num);letter-spacing:-.03em;margin:24px 0 10px;color:var(--green)}
+.fish-amt small{font-size:.34em;font-weight:400;margin-right:6px;opacity:.8;letter-spacing:0}
+.fish-sub{font:400 13px/1.7 var(--zh);color:var(--muted)}
+.fish-sub b{font:500 13px var(--num);color:var(--text)}
+.btn{margin-top:auto;height:48px;border-radius:14px;border:0;cursor:pointer;font:500 15px var(--zh);letter-spacing:.08em;transition:transform .15s,filter .2s,background .2s}
+.btn:active{transform:scale(.98)}
+.btn-gold{background:linear-gradient(180deg,#f6dd98,#d4a54b);color:#1b1408;box-shadow:0 10px 30px -10px rgba(226,189,104,.6)}
+.btn-gold:hover{filter:brightness(1.06)}
+.btn-ghost{background:var(--panel-2);color:var(--text);border:1px solid var(--line)}
+.btn-ghost:hover{border-color:var(--line-2)}
+.fish .btn{margin-top:auto}
+.fish-sub{margin-bottom:26px}
+.fish.active .btn{background:rgba(111,216,164,.12);color:var(--green);box-shadow:none;border:1px solid rgba(111,216,164,.3)}
+
+footer{margin-top:40px;text-align:center;font:400 12px/1.9 var(--zh);color:var(--dim)}
+footer kbd{font:500 11px var(--num);padding:1px 6px;border-radius:5px;border:1px solid var(--line-2);color:var(--muted)}
+
+/* stealth (boss key) */
+.stealth .money{filter:blur(16px) saturate(.3);transition:filter .25s}
+.money{transition:filter .25s}
+
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:20px;background:rgba(5,5,6,.66);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .25s}
+.modal.open{opacity:1;pointer-events:auto}
+.sheet{width:min(560px,100%);max-height:calc(100vh - 40px);overflow:auto;background:#121214;border:1px solid var(--line-2);border-radius:26px;padding:30px;transform:translateY(12px) scale(.98);transition:transform .3s cubic-bezier(.2,.8,.2,1);box-shadow:0 40px 100px -20px rgba(0,0,0,.8)}
+.modal.open .sheet{transform:none}
+.sheet h2{font:700 22px var(--zh);letter-spacing:.04em}
+.sheet .lead{font:400 13px/1.7 var(--zh);color:var(--muted);margin-top:6px}
+.field{margin-top:22px}
+.field > label,.field > .lbl{display:block;font:500 12px var(--zh);color:var(--muted);letter-spacing:.12em;margin-bottom:10px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.input{width:100%;height:48px;border-radius:13px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);color:var(--text);padding:0 14px;font:400 16px var(--num),var(--zh);outline:none;transition:border-color .2s,box-shadow .2s}
+.input:focus{border-color:rgba(226,189,104,.6);box-shadow:0 0 0 4px rgba(226,189,104,.1)}
+.input-money{position:relative}
+.input-money .input{padding-left:62px;font-size:22px;font-weight:300;height:58px}
+.input-money .sym{position:absolute;left:16px;top:50%;transform:translateY(-50%);font:500 14px var(--num);color:var(--gold)}
+select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238c877b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.seg{display:flex;padding:4px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+.seg button{flex:1;height:38px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:500 14px var(--zh);cursor:pointer;transition:background .2s,color .2s}
+.seg button.on{background:rgba(226,189,104,.14);color:var(--gold-hi)}
+.days{display:flex;gap:8px;flex-wrap:wrap}
+.days button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line-2);background:transparent;color:var(--muted);font:500 14px var(--zh);cursor:pointer;transition:all .2s}
+.days button.on{background:rgba(226,189,104,.14);border-color:rgba(226,189,104,.5);color:var(--gold-hi)}
+.field label.switch,.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;margin:0;font:400 14px var(--zh);color:var(--text);letter-spacing:0;cursor:pointer}
+.switch input{appearance:none;width:44px;height:26px;border-radius:999px;background:rgba(255,255,255,.12);position:relative;cursor:pointer;transition:background .2s;flex:none}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s cubic-bezier(.3,.7,.3,1)}
+.switch input:checked{background:var(--gold)}
+.switch input:checked::after{transform:translateX(18px)}
+.lunch-fields{transition:opacity .2s}
+.lunch-fields.off{opacity:.35;pointer-events:none}
+.preview{margin-top:24px;padding:16px 18px;border-radius:14px;background:rgba(226,189,104,.06);border:1px solid rgba(226,189,104,.16);font:400 13px/1.8 var(--zh);color:#d9d2c1}
+.preview b{font:500 14px var(--num);color:var(--gold-hi)}
+.err{color:var(--coral);font:400 13px var(--zh);margin-top:12px;min-height:1em}
+.sheet-actions{display:flex;gap:10px;margin-top:20px}
+.sheet-actions .btn{flex:1;margin:0}
+
+/* toast & confetti */
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,30px);opacity:0;z-index:60;padding:12px 20px;border-radius:999px;background:rgba(24,22,18,.92);border:1px solid rgba(226,189,104,.3);color:var(--gold-hi);font:500 14px var(--zh);backdrop-filter:blur(10px);transition:all .35s cubic-bezier(.2,.8,.2,1);pointer-events:none;white-space:nowrap;box-shadow:0 20px 50px -10px rgba(0,0,0,.6)}
+.toast.show{transform:translate(-50%,0);opacity:1}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:70}
+
+@media (max-width:860px){
+  .c3,.c4,.c5,.c6,.c7,.c8{grid-column:span 12}
+  .c3.stat{grid-column:span 6}
+  .hero{padding:26px 22px 24px}
+  .wrap{padding:20px 16px 44px}
+}
+@media (max-width:420px){
+  .icon-btn .t{display:none}
+  .icon-btn{padding:0 12px}
+  .stat .v{font-size:24px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="./" aria-label="薪跳 PayPulse">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbecc0"/><stop offset="1" stop-color="#c8973f"/></linearGradient></defs><rect x="1" y="1" width="62" height="62" rx="17" fill="#141416" stroke="rgba(226,189,104,.3)"/><path d="M10 34h11l5-12 8 22 6-16 4 6h10" fill="none" stroke="url(#lg)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><div class="brand-name">薪跳</div><div class="brand-sub">PAYPULSE</div></div>
+    </a>
+    <div class="actions">
+      <button class="icon-btn" id="bossBtn" title="老闆鍵（B）：隱藏所有金額">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span class="t">老闆鍵</span>
+      </button>
+      <button class="icon-btn" id="settingsBtn" title="設定">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+        <span class="t">設定</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="card hero" id="hero">
+      <div class="hero-top">
+        <span class="status" id="status" data-k="working"><i class="dot"></i><span id="statusLabel">上班中</span></span>
+        <span class="clock" id="clock"></span>
+      </div>
+      <div class="amount-label">今日已入帳</div>
+      <div class="amount-row" id="amountRow">
+        <div class="amount money" id="amount"><span class="cur" id="cur">NT$</span><span id="int">0</span><span class="dec" id="dec">.0000</span></div>
+      </div>
+      <svg class="ecg" viewBox="0 0 1200 46" preserveAspectRatio="none" aria-hidden="true">
+        <defs><linearGradient id="ecgGrad" x1="0" x2="1"><stop offset="0" stop-color="#a9792b" stop-opacity="0"/><stop offset=".6" stop-color="#e2bd68"/><stop offset="1" stop-color="#fff3cf"/></linearGradient></defs>
+        <path class="base" fill="none" stroke-width="1.5" d="M0 30H160l10-8 8 8h20l8 4 10-30 12 40 8-14h24l12-6 12 6H560l10-8 8 8h20l8 4 10-30 12 40 8-14h24l12-6 12 6H960l10-8 8 8h20l8 4 10-30 12 40 8-14h24l12-6 12 6H1200"/>
+        <path class="beat" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M0 30H160l10-8 8 8h20l8 4 10-30 12 40 8-14h24l12-6 12 6H560l10-8 8 8h20l8 4 10-30 12 40 8-14h24l12-6 12 6H960l10-8 8 8h20l8 4 10-30 12 40 8-14h24l12-6 12 6H1200"/>
+      </svg>
+      <div class="rates money">
+        <span>每秒<b id="rSec">—</b></span>
+        <span>每分鐘<b id="rMin">—</b></span>
+        <span>每小時<b id="rHour">—</b></span>
+      </div>
+      <p class="quip" id="quip">&nbsp;</p>
+    </section>
+
+    <div class="grid">
+      <section class="card c5 countdown">
+        <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg><span id="cdLabel">距離下班</span></div>
+        <div class="cd-time" id="cdTime">00<i>:</i>00<i>:</i>00</div>
+        <div class="cd-sub" id="cdSub">&nbsp;</div>
+      </section>
+
+      <section class="card c7">
+        <div class="progress-head">
+          <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>今日工時進度</div>
+          <div class="pct" id="pct">0<small>%</small></div>
+        </div>
+        <div class="track"><div class="fill" id="fill"></div><div class="lunch" id="lunchSeg"></div><div class="now" id="nowDot"></div></div>
+        <div class="ticks" id="ticks"></div>
+        <div class="progress-foot" id="pFoot">&nbsp;</div>
+      </section>
+
+      <section class="card c3 stat gold"><div class="eyebrow">時薪</div><div class="v money" id="sHour">—</div><div class="s" id="sHourSub">&nbsp;</div></section>
+      <section class="card c3 stat"><div class="eyebrow">今日滿勤可得</div><div class="v money" id="sDay">—</div><div class="s" id="sDaySub">&nbsp;</div></section>
+      <section class="card c3 stat"><div class="eyebrow">本月累計</div><div class="v money" id="sMonth">—</div><div class="s">已過工作日按滿勤計</div></section>
+      <section class="card c3 stat"><div class="eyebrow">本月工作日</div><div class="v" id="sDays">—</div><div class="s money" id="sDaysSub">&nbsp;</div></section>
+
+      <section class="card c7">
+        <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7Zm0 0h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7Z"/></svg>今日戰利品</div>
+        <ul class="goals" id="goals"></ul>
+      </section>
+
+      <section class="card c5 fish" id="fish">
+        <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 12c2-4 6-6 10-5 2 .5 3.5 2.5 4.5 5-1 2.5-2.5 4.5-4.5 5-4 1-8-1-10-5Zm0 0L2 8v8l4.5-4Z"/><circle cx="17" cy="11" r=".8" fill="currentColor"/></svg>帶薪摸魚<span class="badge">摸魚中</span></div>
+        <div class="fish-amt money" id="fishAmt"><small>NT$</small>0.00</div>
+        <div class="fish-sub" id="fishSub">按下開始，計算你今天的帶薪摸魚收入。</div>
+        <button class="btn btn-gold" id="fishBtn">開始摸魚</button>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    薪跳 PayPulse · 所有資料只儲存在你的瀏覽器，不會上傳任何地方<br>
+    按 <kbd>B</kbd> 啟動老闆鍵 · 按 <kbd>S</kbd> 開啟設定
+  </footer>
+</div>
+
+<!-- settings -->
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <h2 id="mTitle">薪資設定</h2>
+    <p class="lead" id="mLead">設定完成後，薪跳會依照你的工時，每一秒為你即時入帳。</p>
+
+    <div class="field">
+      <span class="lbl">計薪方式</span>
+      <div class="seg" id="fMode"><button data-v="monthly">月薪</button><button data-v="hourly">時薪</button></div>
+    </div>
+    <div class="field row">
+      <div>
+        <label for="fSalary" id="fSalaryLbl">月薪</label>
+        <div class="input-money"><span class="sym" id="fSym">NT$</span><input class="input" id="fSalary" type="number" min="0" step="any" inputmode="decimal"></div>
+      </div>
+      <div>
+        <label for="fCur">幣別</label>
+        <select class="input" id="fCur" style="height:58px"></select>
+      </div>
+    </div>
+    <div class="field row">
+      <div><label for="fStart">上班時間</label><input class="input" type="time" id="fStart"></div>
+      <div><label for="fEnd">下班時間</label><input class="input" type="time" id="fEnd"></div>
+    </div>
+    <div class="field">
+      <label class="switch"><span>有午休時間</span><input type="checkbox" id="fLunch"></label>
+      <div class="lunch-fields" id="lunchFields">
+        <div class="row" style="margin-top:6px">
+          <div><input class="input" type="time" id="fLunchStart" aria-label="午休開始"></div>
+          <div><input class="input" type="time" id="fLunchEnd" aria-label="午休結束"></div>
+        </div>
+        <label class="switch"><span>午休也計薪</span><input type="checkbox" id="fLunchPaid"></label>
+      </div>
+    </div>
+    <div class="field">
+      <span class="lbl">工作日</span>
+      <div class="days" id="fDays"></div>
+    </div>
+    <div class="preview money" id="fPreview"></div>
+    <div class="err" id="fErr"></div>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" id="mCancel">取消</button>
+      <button class="btn btn-gold" id="mSave">儲存設定</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<canvas id="confetti"></canvas>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const KEY = 'paypulse.settings.v1', FKEY = 'paypulse.fish.v1';
+const WEEK = ['日','一','二','三','四','五','六'];
+
+const CUR = {
+  TWD:{sym:'NT$',  name:'新台幣 TWD', fx:1},
+  HKD:{sym:'HK$',  name:'港幣 HKD', fx:.24},
+  MOP:{sym:'MOP$', name:'澳門幣 MOP', fx:.25},
+  CNY:{sym:'¥',    name:'人民幣 CNY', fx:.22},
+  USD:{sym:'US$',  name:'美元 USD', fx:.031},
+  SGD:{sym:'S$',   name:'新加坡幣 SGD', fx:.041},
+  JPY:{sym:'JP¥',  name:'日圓 JPY', fx:4.7},
+};
+// 價格以新台幣計，其他幣別按約略匯率換算
+const GOALS = [
+  ['🧋','一杯珍珠奶茶',65],
+  ['🍱','一個雞腿便當',120],
+  ['☕','一杯精品拿鐵',160],
+  ['🎬','一張電影票',330],
+  ['📺','一個月串流影音',390],
+  ['🍣','一頓迴轉壽司',600],
+  ['🥩','一頓燒肉吃到飽',900],
+  ['👟','一雙新球鞋',3200],
+  ['🎧','一副降噪耳機',7990],
+  ['✈️','一趟東京來回機票',12000],
+];
+const DEF = {mode:'monthly',salary:50000,currency:'TWD',start:'09:00',end:'18:00',lunch:true,lunchStart:'12:00',lunchEnd:'13:00',lunchPaid:false,workdays:[1,2,3,4,5]};
+
+/* ---------- state ---------- */
+let cfg = null;
+try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) cfg = {...DEF, ...s}; } catch(e) {}
+const firstVisit = !cfg;
+if (!cfg) cfg = {...DEF};
+
+let D = {}, goalEls = [];
+const t2s = t => { const [h,m] = String(t).split(':').map(Number); return (h||0)*3600 + (m||0)*60; };
+const overlap = (a1,a2,b1,b2) => Math.max(0, Math.min(a2,b2) - Math.max(a1,b1));
+function derive(){
+  const startS = t2s(cfg.start), endS = t2s(cfg.end);
+  let L1 = 0, L2 = 0;
+  if (cfg.lunch){ L1 = Math.max(t2s(cfg.lunchStart), startS); L2 = Math.min(t2s(cfg.lunchEnd), endS); if (L2 < L1) L2 = L1; }
+  D = {startS, endS, L1, L2, unpaidLunch: cfg.lunch && !cfg.lunchPaid, workSet: new Set(cfg.workdays)};
+  D.paidDay = paidBetween(0, 86400);
+  D.sym = CUR[cfg.currency]?.sym || 'NT$';
+  D.fx = CUR[cfg.currency]?.fx || 1;
+  D.goals = GOALS.map(([ico,name,p]) => ({ico, name, price: nice(p*D.fx)}));
+}
+function nice(v){ if (v >= 1000) return Math.round(v/50)*50; if (v >= 100) return Math.round(v/5)*5; if (v >= 10) return Math.round(v); return Math.round(v*2)/2; }
+function paidBetween(a,b){
+  if (b <= a) return 0;
+  let s = overlap(a,b,D.startS,D.endS);
+  if (D.unpaidLunch) s -= overlap(a,b,D.L1,D.L2);
+  return Math.max(0,s);
+}
+const isWork = d => D.workSet.has(d.getDay());
+function workdaysIn(y,m){ const n = new Date(y,m+1,0).getDate(); let c = 0; for (let i=1;i<=n;i++) if (D.workSet.has(new Date(y,m,i).getDay())) c++; return c; }
+function dailyWage(d){
+  if (cfg.mode === 'hourly') return cfg.salary * D.paidDay / 3600;
+  const n = workdaysIn(d.getFullYear(), d.getMonth());
+  return n ? cfg.salary / n : 0;
+}
+
+/* ---------- format ---------- */
+const fmt = (v,d=2) => (Number.isFinite(v)?v:0).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const money = (v,d=2) => `${D.sym}${fmt(v,d)}`;
+const pad = n => String(Math.floor(n)).padStart(2,'0');
+function dur(sec){
+  sec = Math.max(0, Math.round(sec));
+  const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = sec%60;
+  if (h) return `${h} 小時 ${m} 分`;
+  if (m) return `${m} 分 ${s} 秒`;
+  return `${s} 秒`;
+}
+const dateKey = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+function shortRate(v){ const d = v < .01 ? 5 : v < 1 ? 4 : 2; return money(v,d); }
+
+/* ---------- status ---------- */
+function statusOf(sec, work){
+  if (!work) return {k:'rest', label:'休假日'};
+  if (sec < D.startS) return {k:'before', label:'尚未上班'};
+  if (sec >= D.endS) return {k:'after', label:'已下班'};
+  if (cfg.lunch && sec >= D.L1 && sec < D.L2) return cfg.lunchPaid ? {k:'working', label:'帶薪午休中'} : {k:'lunch', label:'午休中'};
+  return {k:'working', label:'上班中'};
+}
+function nextShift(now){
+  for (let i=1;i<=7;i++){
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate()+i);
+    if (isWork(d)) return new Date(d.getTime() + D.startS*1000);
+  }
+  return null;
+}
+
+/* ---------- goals DOM ---------- */
+function buildGoals(){
+  $('#goals').innerHTML = D.goals.map((g,i) => `
+    <li class="goal" data-i="${i}">
+      <span class="ico">${g.ico}</span>
+      <div><div class="name">${g.name}<small class="money">${money(g.price,0)}</small></div><div class="bar"><i></i></div></div>
+      <span class="tag"></span>
+    </li>`).join('');
+  goalEls = [...document.querySelectorAll('.goal')].map(el => ({el, bar: el.querySelector('.bar i'), tag: el.querySelector('.tag')}));
+}
+
+/* ---------- fish ---------- */
+let fish = loadFish();
+function loadFish(){
+  try { const f = JSON.parse(localStorage.getItem(FKEY)); if (f && f.date === dateKey(new Date())) return f; } catch(e) {}
+  return {date: dateKey(new Date()), paid:0, active:false, since:0};
+}
+const saveFish = () => localStorage.setItem(FKEY, JSON.stringify(fish));
+function nowSec(){ const n = new Date(); return (n - new Date(n.getFullYear(),n.getMonth(),n.getDate()))/1000; }
+function toggleFish(){
+  const s = nowSec();
+  if (fish.active){ fish.paid += paidBetween(fish.since, s); fish.active = false; toast('回到工作崗位，辛苦了'); }
+  else { fish.active = true; fish.since = s; toast('摸魚計時開始，老闆看不到的'); }
+  saveFish(); tick();
+}
+
+/* ---------- main loop ---------- */
+let lastInt = null, lastStatus = null, lastUnlocked = null, lastTitle = 0;
+function tick(){
+  const now = new Date();
+  const mid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const sec = (now - mid)/1000;
+  const work = isWork(now);
+  const daily = dailyWage(now);
+  const rate = D.paidDay ? daily / D.paidDay : 0;
+  const paidSoFar = work ? paidBetween(0, sec) : 0;
+  const earned = paidSoFar * rate;
+  const st = statusOf(sec, work);
+
+  if (fish.date !== dateKey(now)){ fish = {date:dateKey(now), paid:0, active:false, since:0}; saveFish(); }
+
+  // clock + status
+  $('#clock').innerHTML = `${dateKey(now)} 週${WEEK[now.getDay()]}<b>${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}</b>`;
+  const stEl = $('#status');
+  if (stEl.dataset.k !== st.k) stEl.dataset.k = st.k;
+  $('#statusLabel').textContent = st.label;
+  $('#hero').classList.toggle('idle', st.k !== 'working');
+
+  // hero amount
+  const intPart = Math.floor(earned);
+  $('#cur').textContent = D.sym;
+  $('#int').textContent = intPart.toLocaleString('en-US');
+  $('#dec').textContent = '.' + fmt(earned - intPart, 4).split('.')[1];
+  if (lastInt !== null && intPart > lastInt && st.k === 'working') floatPlus(intPart - lastInt);
+  lastInt = intPart;
+
+  $('#rSec').textContent = '+' + shortRate(rate);
+  $('#rMin').textContent = '+' + money(rate*60);
+  $('#rHour').textContent = '+' + money(rate*3600);
+
+  // goals
+  let unlocked = 0, next = null;
+  D.goals.forEach((g,i) => {
+    const r = goalEls[i], done = earned >= g.price;
+    if (done) unlocked++; else if (!next) next = {g, i};
+    r.el.classList.toggle('done', done);
+    r.el.classList.toggle('next', !!next && next.i === i);
+    r.bar.style.width = Math.min(100, earned/g.price*100) + '%';
+    if (done) r.tag.textContent = '✓ 已賺回';
+    else if (g.price <= daily && work && st.k !== 'after') r.tag.textContent = '再 ' + dur((g.price - earned)/rate);
+    else r.tag.textContent = `約 ${Math.max(1, Math.ceil(g.price / daily))} 個工作天`;
+  });
+  if (lastUnlocked !== null && unlocked > lastUnlocked){ const g = D.goals[unlocked-1]; toast(`${g.ico} 今天已經賺回${g.name}！`); }
+  lastUnlocked = unlocked;
+
+  // quip
+  $('#quip').innerHTML = quip(st, earned, daily, rate, next, unlocked, now);
+
+  // countdown
+  let cdLabel, cdSec, cdSub;
+  if (st.k === 'working' || st.k === 'lunch'){ cdLabel = '距離下班'; cdSec = D.endS - sec; cdSub = `${cfg.end} 準時收工，再撐一下`; }
+  else if (st.k === 'before'){ cdLabel = '距離上班'; cdSec = D.startS - sec; cdSub = `${cfg.start} 開始計薪，先吃個早餐`; }
+  else {
+    const ns = nextShift(now);
+    cdLabel = '距離下次上班'; cdSec = ns ? (ns - now)/1000 : 0;
+    cdSub = ns ? `週${WEEK[ns.getDay()]} ${cfg.start} 見，今天好好休息` : '尚未設定工作日';
+  }
+  $('#cdLabel').textContent = cdLabel;
+  const H = Math.floor(cdSec/3600), M = Math.floor(cdSec%3600/60), S = Math.floor(cdSec%60);
+  $('#cdTime').innerHTML = `${pad(H)}<i>:</i>${pad(M)}<i>:</i>${pad(S)}`;
+  $('#cdSub').textContent = cdSub;
+
+  // progress
+  const span = Math.max(1, D.endS - D.startS);
+  const pos = Math.min(1, Math.max(0, (sec - D.startS)/span));
+  const pct = work && D.paidDay ? paidSoFar / D.paidDay * 100 : 0;
+  $('#pct').innerHTML = `${fmt(pct,1)}<small>%</small>`;
+  $('#fill').style.width = (work ? pos*100 : 0) + '%';
+  $('#nowDot').style.left = (work ? pos*100 : 0) + '%';
+  $('#nowDot').style.opacity = work ? 1 : .35;
+  $('#pFoot').innerHTML = work
+    ? `已工作 <b>${fmt(paidSoFar/3600)}</b> / ${fmt(D.paidDay/3600)} 小時${D.unpaidLunch ? '（午休不計）' : ''}`
+    : '今天是休假日，進度條也在休息。';
+
+  // stats
+  const y = now.getFullYear(), m = now.getMonth();
+  let past = 0; for (let i=1;i<now.getDate();i++) if (D.workSet.has(new Date(y,m,i).getDay())) past++;
+  const nWork = workdaysIn(y,m);
+  const monthEarned = past*daily + earned;
+  const monthFull = cfg.mode === 'monthly' ? cfg.salary : daily*nWork;
+  $('#sHour').innerHTML = `<small>${D.sym}</small>${fmt(rate*3600)}`;
+  $('#sHourSub').textContent = `每分鐘 ${money(rate*60)}`;
+  $('#sDay').innerHTML = `<small>${D.sym}</small>${fmt(daily)}`;
+  $('#sDaySub').textContent = work ? `還有 ${money(Math.max(0,daily-earned))} 待入帳` : '休假日不計薪';
+  $('#sMonth').innerHTML = `<small>${D.sym}</small>${fmt(monthEarned)}`;
+  $('#sDays').innerHTML = `${work ? past+1 : past}<small style="margin-left:4px">/ ${nWork} 天</small>`;
+  $('#sDaysSub').textContent = `本月滿勤 ${money(monthFull,0)}`;
+
+  // fish
+  const fishPaid = fish.paid + (fish.active ? paidBetween(fish.since, sec) : 0);
+  const fishMoney = fishPaid * rate;
+  $('#fish').classList.toggle('active', fish.active);
+  $('#fishAmt').innerHTML = `<small>${D.sym}</small>${fmt(fishMoney)}`;
+  $('#fishSub').innerHTML = fishPaid > 0 || fish.active
+    ? `今日帶薪摸魚 <b>${dur(fishPaid)}</b><br>佔今日收入 <b>${fmt(earned ? fishMoney/earned*100 : 0,1)}%</b>${st.k !== 'working' && fish.active ? ' · 非計薪時段不累計' : ''}`
+    : '按下開始，計算你今天的帶薪摸魚收入。<br>上廁所、滑手機、發呆，通通算錢。';
+  $('#fishBtn').textContent = fish.active ? '結束摸魚，回去工作' : '開始摸魚';
+
+  // celebration
+  if (lastStatus === 'working' && st.k === 'after'){ confetti(); toast(`下班啦！今日入帳 ${money(earned)}`); }
+  lastStatus = st.k;
+
+  if (document.body.classList.contains('stealth')){ document.title = '季度報告_最終版_v3'; }
+  else if (Date.now() - lastTitle > 900){
+    document.title = st.k === 'working' || st.k === 'lunch' ? `${money(earned)} · 薪跳` : `${st.label} · 薪跳 PayPulse`;
+    lastTitle = Date.now();
+  }
+}
+
+function quip(st, earned, daily, rate, next, unlocked, now){
+  const e = s => `<em class="money">${s}</em>`;
+  if (st.k === 'rest') return `今天是休假日，薪水也在休息。下個工作日預計入帳 ${e(money(dailyWage(nextShift(now) || now)))}。`;
+  if (st.k === 'before') return `還沒上班，今天預計入帳 ${e(money(daily))}。深呼吸，等一下就開始賺了。`;
+  if (st.k === 'after'){
+    const tea = D.goals[0];
+    return `今日收工，入帳 ${e(money(earned))}，相當於 ${e(Math.floor(earned/tea.price))} 杯珍珠奶茶。你值得。`;
+  }
+  if (st.k === 'lunch') return `午休時間不計薪，但吃飽才有力氣賺錢。目前已入帳 ${e(money(earned))}。`;
+  if (next && next.g.price <= daily) return `再上班 ${e(dur((next.g.price - earned)/rate))}，就賺回${next.g.name}。`;
+  if (next) return `今日戰利品全數到手！下一站：${next.g.name}，大約 ${e(Math.ceil(next.g.price/daily))} 個工作天。`;
+  return `每一秒，都在為你入帳。`;
+}
+
+/* ---------- effects ---------- */
+function floatPlus(n){
+  const row = $('#amountRow'), amt = $('#amount');
+  const el = document.createElement('span');
+  el.className = 'plus money';
+  el.textContent = `+${D.sym}${n}`;
+  el.style.setProperty('--x', Math.min(amt.offsetWidth - 20, row.offsetWidth - 80) + 'px');
+  row.appendChild(el);
+  setTimeout(() => el.remove(), 1700);
+}
+let toastT;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function confetti(){
+  const c = $('#confetti'), ctx = c.getContext('2d'), dpr = devicePixelRatio || 1;
+  c.width = innerWidth*dpr; c.height = innerHeight*dpr; ctx.scale(dpr,dpr);
+  const cols = ['#fbecc0','#e2bd68','#c8973f','#fff','#6fd8a4'];
+  const ps = Array.from({length:180}, () => ({
+    x: innerWidth/2 + (Math.random()-.5)*200, y: innerHeight*.35,
+    vx: (Math.random()-.5)*14, vy: -Math.random()*14-4, r: Math.random()*5+3,
+    rot: Math.random()*6, vr: (Math.random()-.5)*.3, c: cols[Math.random()*cols.length|0]
+  }));
+  const t0 = performance.now();
+  (function frame(t){
+    ctx.clearRect(0,0,innerWidth,innerHeight);
+    ps.forEach(p => { p.vy += .32; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle = p.c; ctx.globalAlpha = Math.max(0, 1-(t-t0)/3600);
+      ctx.fillRect(-p.r/2,-p.r/4,p.r,p.r/2); ctx.restore(); });
+    if (t - t0 < 3600) requestAnimationFrame(frame); else ctx.clearRect(0,0,innerWidth,innerHeight);
+  })(t0);
+}
+function renderTicks(){
+  const span = Math.max(1, D.endS - D.startS);
+  const L = $('#lunchSeg');
+  if (cfg.lunch && D.L2 > D.L1){
+    L.style.display = ''; L.style.left = (D.L1-D.startS)/span*100 + '%'; L.style.width = (D.L2-D.L1)/span*100 + '%';
+    L.title = cfg.lunchPaid ? '午休（計薪）' : '午休（不計薪）';
+  } else L.style.display = 'none';
+  const ticks = [[0,cfg.start]];
+  if (cfg.lunch && D.L2 > D.L1) ticks.push([(D.L1-D.startS)/span, cfg.lunchStart], [(D.L2-D.startS)/span, cfg.lunchEnd]);
+  ticks.push([1,cfg.end]);
+  $('#ticks').innerHTML = ticks.map(([p,t]) => `<span style="left:${p*100}%">${t}</span>`).join('');
+}
+
+/* ---------- settings modal ---------- */
+const modal = $('#modal');
+let form = {};
+$('#fCur').innerHTML = Object.entries(CUR).map(([k,v]) => `<option value="${k}">${v.name}（${v.sym}）</option>`).join('');
+$('#fDays').innerHTML = [1,2,3,4,5,6,0].map(d => `<button type="button" data-d="${d}">${WEEK[d]}</button>`).join('');
+
+function openModal(welcome){
+  form = JSON.parse(JSON.stringify(cfg));
+  $('#mTitle').textContent = welcome ? '歡迎使用薪跳' : '薪資設定';
+  $('#mLead').textContent = welcome ? '先花 10 秒設定你的薪資與工時，接下來的每一秒，都會即時為你入帳。' : '設定完成後，薪跳會依照你的工時，每一秒為你即時入帳。';
+  $('#fSalary').value = form.salary;
+  $('#fCur').value = form.currency;
+  $('#fStart').value = form.start; $('#fEnd').value = form.end;
+  $('#fLunch').checked = form.lunch; $('#fLunchPaid').checked = form.lunchPaid;
+  $('#fLunchStart').value = form.lunchStart; $('#fLunchEnd').value = form.lunchEnd;
+  syncForm();
+  modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
+  setTimeout(() => $('#fSalary').focus(), 120);
+}
+function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
+function readForm(){
+  form.salary = parseFloat($('#fSalary').value);
+  form.currency = $('#fCur').value;
+  form.start = $('#fStart').value; form.end = $('#fEnd').value;
+  form.lunch = $('#fLunch').checked; form.lunchPaid = $('#fLunchPaid').checked;
+  form.lunchStart = $('#fLunchStart').value; form.lunchEnd = $('#fLunchEnd').value;
+  if (!(form.salary > 0)) return '請輸入大於 0 的薪資金額';
+  if (!form.start || !form.end || t2s(form.end) <= t2s(form.start)) return '下班時間需晚於上班時間';
+  if (form.lunch && (t2s(form.lunchEnd) <= t2s(form.lunchStart))) return '午休結束時間需晚於開始時間';
+  if (!form.workdays.length) return '請至少選擇一個工作日';
+  return '';
+}
+function syncForm(){
+  document.querySelectorAll('#fMode button').forEach(b => b.classList.toggle('on', b.dataset.v === form.mode));
+  document.querySelectorAll('#fDays button').forEach(b => b.classList.toggle('on', form.workdays.includes(+b.dataset.d)));
+  $('#fSalaryLbl').textContent = form.mode === 'monthly' ? '月薪' : '時薪';
+  $('#lunchFields').classList.toggle('off', !$('#fLunch').checked);
+  const err = readForm();
+  $('#fSym').textContent = CUR[form.currency].sym;
+  $('#fErr').textContent = err;
+  if (err){ $('#fPreview').innerHTML = '填寫完整後，這裡會顯示換算結果。'; return; }
+  const saved = cfg; cfg = form; derive();
+  const now = new Date(), daily = dailyWage(now), rate = D.paidDay ? daily/D.paidDay : 0;
+  const n = workdaysIn(now.getFullYear(), now.getMonth());
+  $('#fPreview').innerHTML = `每日計薪 <b>${fmt(D.paidDay/3600)}</b> 小時 · 本月 <b>${n}</b> 個工作日<br>時薪 <b>${money(rate*3600)}</b> · 日薪 <b>${money(daily)}</b> · 每秒 <b>${shortRate(rate)}</b>`;
+  cfg = saved; derive();
+}
+$('#fMode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; form.mode = b.dataset.v; syncForm(); });
+$('#fDays').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return; const d = +b.dataset.d;
+  form.workdays = form.workdays.includes(d) ? form.workdays.filter(x => x !== d) : [...form.workdays, d];
+  syncForm();
+});
+['#fSalary','#fCur','#fStart','#fEnd','#fLunch','#fLunchPaid','#fLunchStart','#fLunchEnd'].forEach(s => $(s).addEventListener('input', syncForm));
+$('#mCancel').addEventListener('click', () => { if (firstVisit && !localStorage.getItem(KEY)) localStorage.setItem(KEY, JSON.stringify(cfg)); closeModal(); });
+$('#mSave').addEventListener('click', () => {
+  const err = readForm(); if (err){ $('#fErr').textContent = err; return; }
+  cfg = JSON.parse(JSON.stringify(form));
+  localStorage.setItem(KEY, JSON.stringify(cfg));
+  applyCfg(); closeModal(); toast('設定已儲存，開始為你入帳');
+});
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+function applyCfg(){ derive(); buildGoals(); renderTicks(); lastInt = null; lastUnlocked = null; tick(); }
+
+/* ---------- controls ---------- */
+function toggleBoss(){
+  const on = document.body.classList.toggle('stealth');
+  $('#bossBtn').classList.toggle('on', on);
+  toast(on ? '老闆鍵啟動，金額已隱藏' : '金額已恢復顯示');
+  lastTitle = 0; tick();
+}
+$('#bossBtn').addEventListener('click', toggleBoss);
+$('#settingsBtn').addEventListener('click', () => openModal(false));
+$('#fishBtn').addEventListener('click', toggleFish);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && modal.classList.contains('open')) return closeModal();
+  if (e.target.closest('input,select,textarea') || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (modal.classList.contains('open')) return;
+  if (e.key === 'b' || e.key === 'B') toggleBoss();
+  if (e.key === 's' || e.key === 'S') openModal(false);
+});
+
+applyCfg();
+setInterval(tick, 60);
+if (firstVisit) setTimeout(() => openModal(true), 500);
+})();
+</script>
+</body>
+</html>
