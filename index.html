@@ -242,23 +242,54 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
   .stat .v{font-size:24px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* ---------- language ---------- */
+.langseg{display:inline-flex;height:40px;padding:3px;border-radius:999px;border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(12px)}
+.langseg button{min-width:36px;padding:0 10px;border:0;border-radius:999px;background:transparent;color:var(--muted);font:600 12px var(--num),var(--zh);letter-spacing:.04em;cursor:pointer;transition:background .2s,color .2s}
+.langseg button:hover{color:var(--text)}
+.langseg button.on{background:rgba(226,189,104,.14);color:var(--gold-hi);cursor:default}
+html[data-lang="en"]:not(.i18n) .wrap,html[data-lang="en"]:not(.i18n) .modal{visibility:hidden}
+/* 英文版：標點和字都用 Inter，中文字型的彎引號是全形，會多出一格空白 */
+html[lang="en"]{--zh:"Inter",ui-sans-serif,system-ui,-apple-system,sans-serif}
+html[lang="en"] .brand-name{font-family:var(--num);font-weight:600;letter-spacing:-.01em;font-size:21px}
+html[lang="en"] .brand-sub{letter-spacing:.22em}
+html[lang="en"] .amount-label{font-size:12px;letter-spacing:.24em;text-transform:uppercase}
+html[lang="en"] .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+html[lang="en"] .days button{width:auto;min-width:50px;padding:0 10px}
+@media (max-width:420px){
+  .langseg{padding:3px 2px}
+  .langseg button.on{display:none}
+}
 </style>
+<script>
+// 語言：網址的 ?lang= → 自己選過的 → IP 地區 → 瀏覽器語言（有中文就用中文，其他都用英文）
+// IP 地區由 functions/index.js 在 Cloudflare 寫進 <html data-geo>：台灣、香港、澳門、中國用中文，其他地區用英文
+(function () {
+  var q = new URLSearchParams(location.search).get('lang'), s = null, h = document.documentElement;
+  try { s = localStorage.getItem('paypulse.lang'); } catch (e) {}
+  var g = h.dataset.geo, geo = /^[A-Z]{2}$/.test(g || '') ? (/^(TW|HK|MO|CN)$/.test(g) ? 'zh' : 'en') : null;
+  var l = q === 'en' || q === 'zh' ? q : s === 'en' || s === 'zh' ? s : geo || ([].concat(navigator.languages || navigator.language || []).some(function (x) { return /^zh/i.test(x); }) ? 'zh' : 'en');
+  h.dataset.lang = l; if (l === 'en') h.lang = 'en';
+})();
+</script>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <a class="brand" href="./" aria-label="薪跳 PayPulse">
+    <a class="brand" href="./" data-ia="aria-label:brandFull">
       <svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbecc0"/><stop offset="1" stop-color="#c8973f"/></linearGradient></defs><rect x="1" y="1" width="62" height="62" rx="17" fill="#141416" stroke="rgba(226,189,104,.3)"/><path d="M10 34h11l5-12 8 22 6-16 4 6h10" fill="none" stroke="url(#lg)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <div><div class="brand-name">薪跳</div><div class="brand-sub">PAYPULSE</div></div>
+      <div><div class="brand-name" data-i="brand">薪跳</div><div class="brand-sub" data-i="brandSub">PAYPULSE</div></div>
     </a>
     <div class="actions">
-      <button class="icon-btn" id="bossBtn" title="老闆鍵（B）：隱藏所有金額">
+      <div class="langseg" role="group" aria-label="語言 Language">
+        <button type="button" data-lang-set="zh" lang="zh-Hant">中</button><button type="button" data-lang-set="en" lang="en">EN</button>
+      </div>
+      <button class="icon-btn" id="bossBtn" data-ia="title:bossTitle">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
-        <span class="t">老闆鍵</span>
+        <span class="t" data-i="boss">老闆鍵</span>
       </button>
-      <button class="icon-btn" id="settingsBtn" title="設定">
+      <button class="icon-btn" id="settingsBtn" data-ia="title:settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
-        <span class="t">設定</span>
+        <span class="t" data-i="settings">設定</span>
       </button>
     </div>
   </header>
@@ -269,7 +300,7 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
         <span class="status" id="status" data-k="working"><i class="dot"></i><span id="statusLabel">上班中</span></span>
         <span class="clock" id="clock"></span>
       </div>
-      <div class="amount-label">今日已入帳</div>
+      <div class="amount-label" data-i="earnedToday">今日已入帳</div>
       <div class="amount-row" id="amountRow">
         <div class="amount money" id="amount"><span class="cur" id="cur">NT$</span><span id="int">0</span><span class="dec" id="dec">.0000</span></div>
       </div>
@@ -279,9 +310,9 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
         <path class="beat" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M0 30H160l10-8 8 8h20l8 4 10-30 12 40 8-14h24l12-6 12 6H560l10-8 8 8h20l8 4 10-30 12 40 8-14h24l12-6 12 6H960l10-8 8 8h20l8 4 10-30 12 40 8-14h24l12-6 12 6H1200"/>
       </svg>
       <div class="rates money">
-        <span>每秒<b id="rSec">—</b></span>
-        <span>每分鐘<b id="rMin">—</b></span>
-        <span>每小時<b id="rHour">—</b></span>
+        <span><span data-i="perSec">每秒</span><b id="rSec">—</b></span>
+        <span><span data-i="perMin">每分鐘</span><b id="rMin">—</b></span>
+        <span><span data-i="perHour">每小時</span><b id="rHour">—</b></span>
       </div>
       <p class="quip" id="quip">&nbsp;</p>
     </section>
@@ -295,7 +326,7 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
 
       <section class="card c7">
         <div class="progress-head">
-          <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>今日工時進度</div>
+          <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span data-i="progress">今日工時進度</span></div>
           <div class="pct" id="pct">0<small>%</small></div>
         </div>
         <div class="track"><div class="fill" id="fill"></div><div class="lunch" id="lunchSeg"></div><div class="now" id="nowDot"></div></div>
@@ -303,28 +334,28 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
         <div class="progress-foot" id="pFoot">&nbsp;</div>
       </section>
 
-      <section class="card c3 stat gold"><div class="eyebrow">時薪</div><div class="v money" id="sHour">—</div><div class="s" id="sHourSub">&nbsp;</div></section>
-      <section class="card c3 stat"><div class="eyebrow">今日滿勤可得</div><div class="v money" id="sDay">—</div><div class="s" id="sDaySub">&nbsp;</div></section>
-      <section class="card c3 stat"><div class="eyebrow">本月累計</div><div class="v money" id="sMonth">—</div><div class="s">已過工作日按滿勤計</div></section>
-      <section class="card c3 stat"><div class="eyebrow">本月工作日</div><div class="v" id="sDays">—</div><div class="s money" id="sDaysSub">&nbsp;</div></section>
+      <section class="card c3 stat gold"><div class="eyebrow" data-i="hourly">時薪</div><div class="v money" id="sHour">—</div><div class="s" id="sHourSub">&nbsp;</div></section>
+      <section class="card c3 stat"><div class="eyebrow" data-i="dayFull">今日滿勤可得</div><div class="v money" id="sDay">—</div><div class="s" id="sDaySub">&nbsp;</div></section>
+      <section class="card c3 stat"><div class="eyebrow" data-i="month">本月累計</div><div class="v money" id="sMonth">—</div><div class="s" data-i="monthNote">已過工作日按滿勤計</div></section>
+      <section class="card c3 stat"><div class="eyebrow" data-i="workdays">本月工作日</div><div class="v" id="sDays">—</div><div class="s money" id="sDaysSub">&nbsp;</div></section>
 
       <section class="card c7">
-        <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7Zm0 0h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7Z"/></svg>今日戰利品</div>
+        <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7Zm0 0h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7Z"/></svg><span data-i="haul">今日戰利品</span></div>
         <ul class="goals" id="goals"></ul>
       </section>
 
       <section class="card c5 fish" id="fish">
-        <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 12c2-4 6-6 10-5 2 .5 3.5 2.5 4.5 5-1 2.5-2.5 4.5-4.5 5-4 1-8-1-10-5Zm0 0L2 8v8l4.5-4Z"/><circle cx="17" cy="11" r=".8" fill="currentColor"/></svg>帶薪摸魚<span class="badge">摸魚中</span></div>
+        <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 12c2-4 6-6 10-5 2 .5 3.5 2.5 4.5 5-1 2.5-2.5 4.5-4.5 5-4 1-8-1-10-5Zm0 0L2 8v8l4.5-4Z"/><circle cx="17" cy="11" r=".8" fill="currentColor"/></svg><span data-i="fish">帶薪摸魚</span><span class="badge" data-i="fishing">摸魚中</span></div>
         <div class="fish-amt money" id="fishAmt"><small>NT$</small>0.00</div>
-        <div class="fish-sub" id="fishSub">按下開始，計算你今天的帶薪摸魚收入。</div>
+        <div class="fish-sub" id="fishSub">&nbsp;</div>
         <button class="btn btn-gold" id="fishBtn">開始摸魚</button>
       </section>
     </div>
   </main>
 
   <footer>
-    薪跳 PayPulse · 所有資料只儲存在你的瀏覽器，不會上傳任何地方<br>
-    按 <kbd>B</kbd> 啟動老闆鍵 · 按 <kbd>S</kbd> 開啟設定
+    <span data-i="footer1">薪跳 PayPulse · 所有資料只儲存在你的瀏覽器，不會上傳任何地方</span><br>
+    <span data-ih="footer2">按 <kbd>B</kbd> 啟動老闆鍵 · 按 <kbd>S</kbd> 開啟設定</span>
   </footer>
 </div>
 
@@ -332,11 +363,11 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
 <div class="modal" id="modal" aria-hidden="true">
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle">
     <h2 id="mTitle">薪資設定</h2>
-    <p class="lead" id="mLead">設定完成後，薪跳會依照你的工時，每一秒為你即時入帳。</p>
+    <p class="lead" id="mLead">&nbsp;</p>
 
     <div class="field">
-      <span class="lbl">計薪方式</span>
-      <div class="seg" id="fMode"><button data-v="monthly">月薪</button><button data-v="hourly">時薪</button></div>
+      <span class="lbl" data-i="payType">計薪方式</span>
+      <div class="seg" id="fMode"><button data-v="monthly" data-i="optMonthly">月薪</button><button data-v="hourly" data-i="optHourly">時薪</button></div>
     </div>
     <div class="field row">
       <div>
@@ -344,33 +375,33 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
         <div class="input-money"><span class="sym" id="fSym">NT$</span><input class="input" id="fSalary" type="number" min="0" step="any" inputmode="decimal"></div>
       </div>
       <div>
-        <label for="fCur">幣別</label>
+        <label for="fCur" data-i="currency">幣別</label>
         <select class="input" id="fCur" style="height:58px"></select>
       </div>
     </div>
     <div class="field row">
-      <div><label for="fStart">上班時間</label><input class="input" type="time" id="fStart"></div>
-      <div><label for="fEnd">下班時間</label><input class="input" type="time" id="fEnd"></div>
+      <div><label for="fStart" data-i="start">上班時間</label><input class="input" type="time" id="fStart"></div>
+      <div><label for="fEnd" data-i="end">下班時間</label><input class="input" type="time" id="fEnd"></div>
     </div>
     <div class="field">
-      <label class="switch"><span>有午休時間</span><input type="checkbox" id="fLunch"></label>
+      <label class="switch"><span data-i="lunch">有午休時間</span><input type="checkbox" id="fLunch"></label>
       <div class="lunch-fields" id="lunchFields">
         <div class="row" style="margin-top:6px">
-          <div><input class="input" type="time" id="fLunchStart" aria-label="午休開始"></div>
-          <div><input class="input" type="time" id="fLunchEnd" aria-label="午休結束"></div>
+          <div><input class="input" type="time" id="fLunchStart" data-ia="aria-label:lunchStart"></div>
+          <div><input class="input" type="time" id="fLunchEnd" data-ia="aria-label:lunchEnd"></div>
         </div>
-        <label class="switch"><span>午休也計薪</span><input type="checkbox" id="fLunchPaid"></label>
+        <label class="switch"><span data-i="lunchPaid">午休也計薪</span><input type="checkbox" id="fLunchPaid"></label>
       </div>
     </div>
     <div class="field">
-      <span class="lbl">工作日</span>
+      <span class="lbl" data-i="workdaysLbl">工作日</span>
       <div class="days" id="fDays"></div>
     </div>
     <div class="preview money" id="fPreview"></div>
     <div class="err" id="fErr"></div>
     <div class="sheet-actions">
-      <button class="btn btn-ghost" id="mCancel">取消</button>
-      <button class="btn btn-gold" id="mSave">儲存設定</button>
+      <button class="btn btn-ghost" id="mCancel" data-i="cancel">取消</button>
+      <button class="btn btn-gold" id="mSave" data-i="save">儲存設定</button>
     </div>
   </div>
 </div>
@@ -382,41 +413,131 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
 (() => {
 'use strict';
 const $ = s => document.querySelector(s);
-const KEY = 'paypulse.settings.v1', FKEY = 'paypulse.fish.v1';
-const WEEK = ['日','一','二','三','四','五','六'];
+const KEY = 'paypulse.settings.v1', FKEY = 'paypulse.fish.v1', LKEY = 'paypulse.lang', SEEN = 'paypulse.seen';
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e) { return null; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch(e) {} },
+};
+
+/* ---------- 文字（中／英） ---------- */
+const T = {
+  zh: {
+    docTitle:'薪跳 PayPulse · 上班鼓勵器', brandFull:'薪跳 PayPulse', brand:'薪跳', brandSub:'PAYPULSE',
+    boss:'老闆鍵', bossTitle:'老闆鍵（B）：隱藏所有金額', settings:'設定',
+    earnedToday:'今日已入帳', perSec:'每秒', perMin:'每分鐘', perHour:'每小時',
+    progress:'今日工時進度', hourly:'時薪', dayFull:'今日滿勤可得', month:'本月累計', monthNote:'已過工作日按滿勤計', workdays:'本月工作日',
+    haul:'今日戰利品', fish:'帶薪摸魚', fishing:'摸魚中',
+    footer1:'薪跳 PayPulse · 所有資料只儲存在你的瀏覽器，不會上傳任何地方',
+    footer2:'按 <kbd>B</kbd> 啟動老闆鍵 · 按 <kbd>S</kbd> 開啟設定',
+    mTitle:'薪資設定', mTitleWelcome:'歡迎使用薪跳',
+    lead:'設定完成後，薪跳會依照你的工時，每一秒為你即時入帳。',
+    leadWelcome:'先花 10 秒設定你的薪資與工時，接下來的每一秒，都會即時為你入帳。',
+    payType:'計薪方式', optMonthly:'月薪', optHourly:'時薪', salaryMonthly:'月薪', salaryHourly:'時薪', currency:'幣別',
+    start:'上班時間', end:'下班時間', lunch:'有午休時間', lunchStart:'午休開始', lunchEnd:'午休結束', lunchPaid:'午休也計薪',
+    workdaysLbl:'工作日', cancel:'取消', save:'儲存設定',
+    errSalary:'請輸入大於 0 的薪資金額', errTime:'下班時間需晚於上班時間', errLunch:'午休結束時間需晚於開始時間', errDays:'請至少選擇一個工作日',
+    previewEmpty:'填寫完整後，這裡會顯示換算結果。',
+    preview:'每日計薪 <b>{h}</b> 小時 · 本月 <b>{n}</b> 個工作日<br>時薪 <b>{hr}</b> · 日薪 <b>{d}</b> · 每秒 <b>{s}</b>',
+    stRest:'休假日', stBefore:'尚未上班', stAfter:'已下班', stPaidLunch:'帶薪午休中', stLunch:'午休中', stWorking:'上班中',
+    cdOff:'距離下班', cdOffSub:'{t} 準時收工，再撐一下', cdStart:'距離上班', cdStartSub:'{t} 開始計薪，先吃個早餐',
+    cdNext:'距離下次上班', cdNextSub:'{d} {t} 見，今天好好休息', cdNone:'尚未設定工作日',
+    pFoot:'已工作 <b>{a}</b> / {b} 小時{x}', pFootLunch:'（午休不計）', pFootRest:'今天是休假日，進度條也在休息。',
+    hourSub:'每分鐘 {v}', daySub:'還有 {v} 待入帳', dayRest:'休假日不計薪', daysUnit:'/ {n} 天', monthFull:'本月滿勤 {v}',
+    gDone:'✓ 已賺回', gEta:'再 {t}', gDays:'約 {n} 個工作天', gToast:'{i} 今天已經賺回{n}！',
+    qRest:'今天是休假日，薪水也在休息。下個工作日預計入帳 {v}。',
+    qBefore:'還沒上班，今天預計入帳 {v}。深呼吸，等一下就開始賺了。',
+    qAfter:'今日收工，入帳 {v}，相當於 {n} 杯珍珠奶茶。你值得。',
+    qLunch:'午休時間不計薪，但吃飽才有力氣賺錢。目前已入帳 {v}。',
+    qNext:'再上班 {t}，就賺回{n}。', qAll:'今日戰利品全數到手！下一站：{n}，大約 {d} 個工作天。', qDefault:'每一秒，都在為你入帳。',
+    fishSub:'今日帶薪摸魚 <b>{t}</b><br>佔今日收入 <b>{p}%</b>{x}', fishOff:' · 非計薪時段不累計',
+    fishEmpty:'按下開始，計算你今天的帶薪摸魚收入。<br>上廁所、滑手機、發呆，通通算錢。',
+    fishStart:'開始摸魚', fishStop:'結束摸魚，回去工作',
+    tFishOn:'摸魚計時開始，老闆看不到的', tFishOff:'回到工作崗位，辛苦了', tOffWork:'下班啦！今日入帳 {v}',
+    tSaved:'設定已儲存，開始為你入帳', tBossOn:'老闆鍵啟動，金額已隱藏', tBossOff:'金額已恢復顯示',
+    bossDoc:'季度報告_最終版_v3', liveDoc:'{v} · 薪跳', idleDoc:'{s} · 薪跳 PayPulse',
+    durH:'{h} 小時 {m} 分', durM:'{m} 分 {s} 秒', durS:'{s} 秒',
+    week:['日','一','二','三','四','五','六'], weekPre:'週',
+  },
+  en: {
+    docTitle:'PayPulse · Workday Motivator', brandFull:'PayPulse', brand:'PayPulse', brandSub:'WORKDAY MOTIVATOR',
+    boss:'Boss key', bossTitle:'Boss key (B): hide every amount', settings:'Settings',
+    earnedToday:'Earned today', perSec:'Per second', perMin:'Per minute', perHour:'Per hour',
+    progress:"Today's hours", hourly:'Hourly rate', dayFull:'A full day pays', month:'Month to date', monthNote:'Past workdays counted in full', workdays:'Workdays this month',
+    haul:"Today's haul", fish:'Paid slacking', fishing:'Slacking',
+    footer1:'PayPulse · Everything stays in your browser. Nothing is uploaded.',
+    footer2:'Press <kbd>B</kbd> for the boss key · <kbd>S</kbd> for settings',
+    mTitle:'Pay settings', mTitleWelcome:'Welcome to PayPulse',
+    lead:'Once you’re set, PayPulse pays you in real time, every second you’re on the clock.',
+    leadWelcome:'Take 10 seconds to set your pay and hours. From then on, every second you work shows up as money.',
+    payType:'Paid by', optMonthly:'Salary', optHourly:'Hourly', salaryMonthly:'Monthly salary', salaryHourly:'Hourly wage', currency:'Currency',
+    start:'Start time', end:'Finish time', lunch:'Lunch break', lunchStart:'Lunch starts', lunchEnd:'Lunch ends', lunchPaid:'Lunch is paid',
+    workdaysLbl:'Workdays', cancel:'Cancel', save:'Save',
+    errSalary:'Enter a pay amount above 0', errTime:'Finish time must be after start time', errLunch:'Lunch must end after it starts', errDays:'Pick at least one workday',
+    previewEmpty:'Fill everything in to see the breakdown.',
+    preview:'<b>{h}</b> paid hours a day · <b>{n}</b> workdays this month<br>Hourly <b>{hr}</b> · Daily <b>{d}</b> · Per second <b>{s}</b>',
+    stRest:'Day off', stBefore:'Not started', stAfter:'Clocked off', stPaidLunch:'Paid lunch', stLunch:'Lunch break', stWorking:'On the clock',
+    cdOff:'Until clocking off', cdOffSub:'Done at {t}. Hang in there.', cdStart:'Until work starts', cdStartSub:'Pay starts at {t}. Grab breakfast first.',
+    cdNext:'Until your next shift', cdNextSub:'See you {d} at {t}. Rest up.', cdNone:'No workdays set',
+    pFoot:'Worked <b>{a}</b> of {b} h{x}', pFootLunch:' (lunch unpaid)', pFootRest:'Day off. The progress bar is resting too.',
+    hourSub:'{v} per minute', daySub:'{v} still to come', dayRest:'No pay on days off', daysUnit:'/ {n} days', monthFull:'Full month {v}',
+    gDone:'✓ Earned', gEta:'{t} to go', gDays:'~{n} workdays', gDays1:'~1 workday', gToast:'{i} Today’s pay just covered {n}!',
+    qRest:'Day off — your pay is resting too. Your next workday brings in {v}.',
+    qBefore:'Not on the clock yet. Today should bring in {v}. Deep breath, it starts soon.',
+    qAfter:'Done for the day: {v} earned. That’s {n} flat whites. You earned it.',
+    qLunch:'Lunch is unpaid, but you earn better fed. {v} in so far.',
+    qNext:'{t} more on the clock and you’ve paid for {n}.', qAll:'Today’s haul is complete! Next up: {n}, about {d} workdays away.', qDefault:'Every second, money comes in.',
+    fishSub:'Slacked on the clock: <b>{t}</b><br>That’s <b>{p}%</b> of today’s pay{x}', fishOff:' · off-the-clock time doesn’t count',
+    fishEmpty:'Tap start to see what your slacking earns today.<br>Bathroom breaks, scrolling, staring into space — it all pays.',
+    fishStart:'Start slacking', fishStop:'Back to work',
+    tFishOn:'Slack timer on. The boss can’t see it.', tFishOff:'Back at it. Nice work.', tOffWork:'Clocked off! Earned today: {v}',
+    tSaved:'Saved. The money starts flowing.', tBossOn:'Boss key on. Amounts hidden.', tBossOff:'Amounts visible again.',
+    bossDoc:'Q4_report_FINAL_v3', liveDoc:'{v} · PayPulse', idleDoc:'{s} · PayPulse',
+    durH:'{h} h {m} min', durM:'{m} min {s} s', durS:'{s} s',
+    week:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], weekPre:'',
+  },
+};
+let lang = document.documentElement.dataset.lang === 'en' ? 'en' : 'zh';
+const t = (k, v) => { let s = T[lang][k] ?? T.zh[k] ?? k; if (v) for (const x in v) s = s.split(`{${x}}`).join(v[x]); return s; };
 
 const CUR = {
-  TWD:{sym:'NT$',  name:'新台幣 TWD', fx:1},
-  HKD:{sym:'HK$',  name:'港幣 HKD', fx:.24},
-  MOP:{sym:'MOP$', name:'澳門幣 MOP', fx:.25},
-  CNY:{sym:'¥',    name:'人民幣 CNY', fx:.22},
-  USD:{sym:'US$',  name:'美元 USD', fx:.031},
-  SGD:{sym:'S$',   name:'新加坡幣 SGD', fx:.041},
-  JPY:{sym:'JP¥',  name:'日圓 JPY', fx:4.7},
+  TWD:{sym:'NT$',  zh:'新台幣 TWD',   en:'Taiwan dollar (TWD)',    fx:1},
+  HKD:{sym:'HK$',  zh:'港幣 HKD',     en:'Hong Kong dollar (HKD)', fx:.24},
+  MOP:{sym:'MOP$', zh:'澳門幣 MOP',   en:'Macau pataca (MOP)',     fx:.25},
+  CNY:{sym:'¥',    zh:'人民幣 CNY',   en:'Chinese yuan (CNY)',     fx:.22},
+  USD:{sym:'US$',  zh:'美元 USD',     en:'US dollar (USD)',        fx:.031},
+  GBP:{sym:'£',    zh:'英鎊 GBP',     en:'British pound (GBP)',    fx:.024},
+  EUR:{sym:'€',    zh:'歐元 EUR',     en:'Euro (EUR)',             fx:.029},
+  CAD:{sym:'CA$',  zh:'加拿大幣 CAD', en:'Canadian dollar (CAD)',  fx:.043},
+  AUD:{sym:'A$',   zh:'澳幣 AUD',     en:'Australian dollar (AUD)',fx:.048},
+  SGD:{sym:'S$',   zh:'新加坡幣 SGD', en:'Singapore dollar (SGD)', fx:.041},
+  JPY:{sym:'JP¥',  zh:'日圓 JPY',     en:'Japanese yen (JPY)',     fx:4.7},
 };
-// 價格以新台幣計，其他幣別按約略匯率換算
-const GOALS = [
-  ['🧋','一杯珍珠奶茶',65],
-  ['🍱','一個雞腿便當',120],
-  ['☕','一杯精品拿鐵',160],
-  ['🎬','一張電影票',330],
-  ['📺','一個月串流影音',390],
-  ['🍣','一頓迴轉壽司',600],
-  ['🥩','一頓燒肉吃到飽',900],
-  ['👟','一雙新球鞋',3200],
-  ['🎧','一副降噪耳機',7990],
-  ['✈️','一趟東京來回機票',12000],
-];
-const DEF = {mode:'monthly',salary:50000,currency:'TWD',start:'09:00',end:'18:00',lunch:true,lunchStart:'12:00',lunchEnd:'13:00',lunchPaid:false,workdays:[1,2,3,4,5]};
+// 戰利品：中文版以新台幣定價、英文版以美元定價，其他幣別按約略匯率換算
+const GOALS = {
+  zh: { base:'TWD', list:[
+    ['🧋','一杯珍珠奶茶',65], ['🍱','一個雞腿便當',120], ['☕','一杯精品拿鐵',160], ['🎬','一張電影票',330], ['📺','一個月串流影音',390],
+    ['🍣','一頓迴轉壽司',600], ['🥩','一頓燒肉吃到飽',900], ['👟','一雙新球鞋',3200], ['🎧','一副降噪耳機',7990], ['✈️','一趟東京來回機票',12000],
+  ]},
+  en: { base:'USD', list:[
+    ['☕','a flat white',5.5], ['🌯','a burrito lunch',14], ['🎬','a movie ticket',16], ['📺','a month of streaming',18], ['🍕','a pizza night',30],
+    ['🍣','a sushi dinner',60], ['🎟️','a concert ticket',110], ['👟','a new pair of sneakers',150], ['🎧','noise-cancelling headphones',350], ['✈️','a round trip to Tokyo',1200],
+  ]},
+};
+// 第一次打開還沒存設定時的預設值，跟著語言走
+const DEFS = {
+  zh: {mode:'monthly',salary:50000,currency:'TWD',start:'09:00',end:'18:00',lunch:true,lunchStart:'12:00',lunchEnd:'13:00',lunchPaid:false,workdays:[1,2,3,4,5]},
+  en: {mode:'monthly',salary:5000,currency:'USD',start:'09:00',end:'17:30',lunch:true,lunchStart:'12:00',lunchEnd:'12:30',lunchPaid:false,workdays:[1,2,3,4,5]},
+};
 
 /* ---------- state ---------- */
 let cfg = null;
-try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) cfg = {...DEF, ...s}; } catch(e) {}
-const firstVisit = !cfg;
-if (!cfg) cfg = {...DEF};
+try { const s = JSON.parse(store.get(KEY)); if (s) cfg = {...DEFS.zh, ...s}; } catch(e) {}
+let saved = !!cfg;
+if (!cfg) cfg = {...DEFS[lang]};
 
 let D = {}, goalEls = [];
-const t2s = t => { const [h,m] = String(t).split(':').map(Number); return (h||0)*3600 + (m||0)*60; };
+const t2s = x => { const [h,m] = String(x).split(':').map(Number); return (h||0)*3600 + (m||0)*60; };
 const overlap = (a1,a2,b1,b2) => Math.max(0, Math.min(a2,b2) - Math.max(a1,b1));
 function derive(){
   const startS = t2s(cfg.start), endS = t2s(cfg.end);
@@ -424,9 +545,10 @@ function derive(){
   if (cfg.lunch){ L1 = Math.max(t2s(cfg.lunchStart), startS); L2 = Math.min(t2s(cfg.lunchEnd), endS); if (L2 < L1) L2 = L1; }
   D = {startS, endS, L1, L2, unpaidLunch: cfg.lunch && !cfg.lunchPaid, workSet: new Set(cfg.workdays)};
   D.paidDay = paidBetween(0, 86400);
-  D.sym = CUR[cfg.currency]?.sym || 'NT$';
-  D.fx = CUR[cfg.currency]?.fx || 1;
-  D.goals = GOALS.map(([ico,name,p]) => ({ico, name, price: nice(p*D.fx)}));
+  const c = CUR[cfg.currency] || CUR.TWD;
+  D.sym = c.sym;
+  const G = GOALS[lang], k = c.fx / CUR[G.base].fx;
+  D.goals = G.list.map(([ico,name,p]) => ({ico, name, price: nice(p*k)}));
 }
 function nice(v){ if (v >= 1000) return Math.round(v/50)*50; if (v >= 100) return Math.round(v/5)*5; if (v >= 10) return Math.round(v); return Math.round(v*2)/2; }
 function paidBetween(a,b){
@@ -443,27 +565,47 @@ function dailyWage(d){
   return n ? cfg.salary / n : 0;
 }
 
-/* ---------- format ---------- */
-const fmt = (v,d=2) => (Number.isFinite(v)?v:0).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+/* ---------- format（數字、時間跟著語言走） ---------- */
+const loc = () => lang === 'en' ? 'en-US' : 'zh-TW';
+const fmt = (v,d=2) => (Number.isFinite(v)?v:0).toLocaleString(loc(),{minimumFractionDigits:d,maximumFractionDigits:d});
 const money = (v,d=2) => `${D.sym}${fmt(v,d)}`;
+const moneyCompact = v => money(v, Math.abs(v - Math.round(v)) < .005 ? 0 : 2);
 const pad = n => String(Math.floor(n)).padStart(2,'0');
 function dur(sec){
   sec = Math.max(0, Math.round(sec));
   const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = sec%60;
-  if (h) return `${h} 小時 ${m} 分`;
-  if (m) return `${m} 分 ${s} 秒`;
-  return `${s} 秒`;
+  return t(h ? 'durH' : m ? 'durM' : 'durS', {h, m, s});
+}
+// "09:00" → 中文 09:00、英文 9:00 AM
+function hm(x){
+  if (lang !== 'en') return x;
+  const [h,m] = String(x).split(':').map(Number);
+  return `${(h % 12) || 12}:${pad(m)} ${h < 12 ? 'AM' : 'PM'}`;
+}
+function hmRange(a, b){
+  const x = hm(a), y = hm(b);
+  if (lang === 'en' && x.slice(-2) === y.slice(-2)) return `${x.slice(0,-3)}–${y}`;
+  return `${x}–${y}`;
 }
 const dateKey = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const wday = d => t('weekPre') + T[lang].week[d.getDay()];
+function clockText(d){
+  if (lang === 'en'){
+    const date = d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+    const time = d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'});
+    return `${date}<b>${time}</b>`;
+  }
+  return `${dateKey(d)} ${wday(d)}<b>${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}</b>`;
+}
 function shortRate(v){ const d = v < .01 ? 5 : v < 1 ? 4 : 2; return money(v,d); }
 
 /* ---------- status ---------- */
 function statusOf(sec, work){
-  if (!work) return {k:'rest', label:'休假日'};
-  if (sec < D.startS) return {k:'before', label:'尚未上班'};
-  if (sec >= D.endS) return {k:'after', label:'已下班'};
-  if (cfg.lunch && sec >= D.L1 && sec < D.L2) return cfg.lunchPaid ? {k:'working', label:'帶薪午休中'} : {k:'lunch', label:'午休中'};
-  return {k:'working', label:'上班中'};
+  if (!work) return {k:'rest', label:t('stRest')};
+  if (sec < D.startS) return {k:'before', label:t('stBefore')};
+  if (sec >= D.endS) return {k:'after', label:t('stAfter')};
+  if (cfg.lunch && sec >= D.L1 && sec < D.L2) return cfg.lunchPaid ? {k:'working', label:t('stPaidLunch')} : {k:'lunch', label:t('stLunch')};
+  return {k:'working', label:t('stWorking')};
 }
 function nextShift(now){
   for (let i=1;i<=7;i++){
@@ -476,9 +618,9 @@ function nextShift(now){
 /* ---------- goals DOM ---------- */
 function buildGoals(){
   $('#goals').innerHTML = D.goals.map((g,i) => `
-    <li class="goal" data-i="${i}">
+    <li class="goal">
       <span class="ico">${g.ico}</span>
-      <div><div class="name">${g.name}<small class="money">${money(g.price,0)}</small></div><div class="bar"><i></i></div></div>
+      <div><div class="name">${lang === 'en' ? g.name[0].toUpperCase() + g.name.slice(1) : g.name}<small class="money">${moneyCompact(g.price)}</small></div><div class="bar"><i></i></div></div>
       <span class="tag"></span>
     </li>`).join('');
   goalEls = [...document.querySelectorAll('.goal')].map(el => ({el, bar: el.querySelector('.bar i'), tag: el.querySelector('.tag')}));
@@ -487,15 +629,15 @@ function buildGoals(){
 /* ---------- fish ---------- */
 let fish = loadFish();
 function loadFish(){
-  try { const f = JSON.parse(localStorage.getItem(FKEY)); if (f && f.date === dateKey(new Date())) return f; } catch(e) {}
+  try { const f = JSON.parse(store.get(FKEY)); if (f && f.date === dateKey(new Date())) return f; } catch(e) {}
   return {date: dateKey(new Date()), paid:0, active:false, since:0};
 }
-const saveFish = () => localStorage.setItem(FKEY, JSON.stringify(fish));
+const saveFish = () => store.set(FKEY, JSON.stringify(fish));
 function nowSec(){ const n = new Date(); return (n - new Date(n.getFullYear(),n.getMonth(),n.getDate()))/1000; }
 function toggleFish(){
   const s = nowSec();
-  if (fish.active){ fish.paid += paidBetween(fish.since, s); fish.active = false; toast('回到工作崗位，辛苦了'); }
-  else { fish.active = true; fish.since = s; toast('摸魚計時開始，老闆看不到的'); }
+  if (fish.active){ fish.paid += paidBetween(fish.since, s); fish.active = false; toast(t('tFishOff')); }
+  else { fish.active = true; fish.since = s; toast(t('tFishOn')); }
   saveFish(); tick();
 }
 
@@ -515,7 +657,7 @@ function tick(){
   if (fish.date !== dateKey(now)){ fish = {date:dateKey(now), paid:0, active:false, since:0}; saveFish(); }
 
   // clock + status
-  $('#clock').innerHTML = `${dateKey(now)} 週${WEEK[now.getDay()]}<b>${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}</b>`;
+  $('#clock').innerHTML = clockText(now);
   const stEl = $('#status');
   if (stEl.dataset.k !== st.k) stEl.dataset.k = st.k;
   $('#statusLabel').textContent = st.label;
@@ -524,8 +666,8 @@ function tick(){
   // hero amount
   const intPart = Math.floor(earned);
   $('#cur').textContent = D.sym;
-  $('#int').textContent = intPart.toLocaleString('en-US');
-  $('#dec').textContent = '.' + fmt(earned - intPart, 4).split('.')[1];
+  $('#int').textContent = intPart.toLocaleString(loc());
+  $('#dec').textContent = '.' + (earned - intPart).toFixed(4).split('.')[1];
   if (lastInt !== null && intPart > lastInt && st.k === 'working') floatPlus(intPart - lastInt);
   lastInt = intPart;
 
@@ -541,24 +683,24 @@ function tick(){
     r.el.classList.toggle('done', done);
     r.el.classList.toggle('next', !!next && next.i === i);
     r.bar.style.width = Math.min(100, earned/g.price*100) + '%';
-    if (done) r.tag.textContent = '✓ 已賺回';
-    else if (g.price <= daily && work && st.k !== 'after') r.tag.textContent = '再 ' + dur((g.price - earned)/rate);
-    else r.tag.textContent = `約 ${Math.max(1, Math.ceil(g.price / daily))} 個工作天`;
+    if (done) r.tag.textContent = t('gDone');
+    else if (g.price <= daily && work && st.k !== 'after') r.tag.textContent = t('gEta', {t: dur((g.price - earned)/rate)});
+    else { const n = Math.max(1, Math.ceil(g.price / daily)); r.tag.textContent = n === 1 && lang === 'en' ? t('gDays1') : t('gDays', {n}); }
   });
-  if (lastUnlocked !== null && unlocked > lastUnlocked){ const g = D.goals[unlocked-1]; toast(`${g.ico} 今天已經賺回${g.name}！`); }
+  if (lastUnlocked !== null && unlocked > lastUnlocked){ const g = D.goals[unlocked-1]; toast(t('gToast', {i: g.ico, n: g.name})); }
   lastUnlocked = unlocked;
 
   // quip
-  $('#quip').innerHTML = quip(st, earned, daily, rate, next, unlocked, now);
+  $('#quip').innerHTML = quip(st, earned, daily, rate, next, now);
 
   // countdown
   let cdLabel, cdSec, cdSub;
-  if (st.k === 'working' || st.k === 'lunch'){ cdLabel = '距離下班'; cdSec = D.endS - sec; cdSub = `${cfg.end} 準時收工，再撐一下`; }
-  else if (st.k === 'before'){ cdLabel = '距離上班'; cdSec = D.startS - sec; cdSub = `${cfg.start} 開始計薪，先吃個早餐`; }
+  if (st.k === 'working' || st.k === 'lunch'){ cdLabel = t('cdOff'); cdSec = D.endS - sec; cdSub = t('cdOffSub', {t: hm(cfg.end)}); }
+  else if (st.k === 'before'){ cdLabel = t('cdStart'); cdSec = D.startS - sec; cdSub = t('cdStartSub', {t: hm(cfg.start)}); }
   else {
     const ns = nextShift(now);
-    cdLabel = '距離下次上班'; cdSec = ns ? (ns - now)/1000 : 0;
-    cdSub = ns ? `週${WEEK[ns.getDay()]} ${cfg.start} 見，今天好好休息` : '尚未設定工作日';
+    cdLabel = t('cdNext'); cdSec = ns ? (ns - now)/1000 : 0;
+    cdSub = ns ? t('cdNextSub', {d: wday(ns), t: hm(cfg.start)}) : t('cdNone');
   }
   $('#cdLabel').textContent = cdLabel;
   const H = Math.floor(cdSec/3600), M = Math.floor(cdSec%3600/60), S = Math.floor(cdSec%60);
@@ -574,8 +716,8 @@ function tick(){
   $('#nowDot').style.left = (work ? pos*100 : 0) + '%';
   $('#nowDot').style.opacity = work ? 1 : .35;
   $('#pFoot').innerHTML = work
-    ? `已工作 <b>${fmt(paidSoFar/3600)}</b> / ${fmt(D.paidDay/3600)} 小時${D.unpaidLunch ? '（午休不計）' : ''}`
-    : '今天是休假日，進度條也在休息。';
+    ? t('pFoot', {a: fmt(paidSoFar/3600), b: fmt(D.paidDay/3600), x: D.unpaidLunch ? t('pFootLunch') : ''})
+    : t('pFootRest');
 
   // stats
   const y = now.getFullYear(), m = now.getMonth();
@@ -584,12 +726,12 @@ function tick(){
   const monthEarned = past*daily + earned;
   const monthFull = cfg.mode === 'monthly' ? cfg.salary : daily*nWork;
   $('#sHour').innerHTML = `<small>${D.sym}</small>${fmt(rate*3600)}`;
-  $('#sHourSub').textContent = `每分鐘 ${money(rate*60)}`;
+  $('#sHourSub').textContent = t('hourSub', {v: money(rate*60)});
   $('#sDay').innerHTML = `<small>${D.sym}</small>${fmt(daily)}`;
-  $('#sDaySub').textContent = work ? `還有 ${money(Math.max(0,daily-earned))} 待入帳` : '休假日不計薪';
+  $('#sDaySub').textContent = work ? t('daySub', {v: money(Math.max(0,daily-earned))}) : t('dayRest');
   $('#sMonth').innerHTML = `<small>${D.sym}</small>${fmt(monthEarned)}`;
-  $('#sDays').innerHTML = `${work ? past+1 : past}<small style="margin-left:4px">/ ${nWork} 天</small>`;
-  $('#sDaysSub').textContent = `本月滿勤 ${money(monthFull,0)}`;
+  $('#sDays').innerHTML = `${work ? past+1 : past}<small style="margin-left:4px">${t('daysUnit', {n: nWork})}</small>`;
+  $('#sDaysSub').textContent = t('monthFull', {v: money(monthFull,0)});
 
   // fish
   const fishPaid = fish.paid + (fish.active ? paidBetween(fish.since, sec) : 0);
@@ -597,33 +739,30 @@ function tick(){
   $('#fish').classList.toggle('active', fish.active);
   $('#fishAmt').innerHTML = `<small>${D.sym}</small>${fmt(fishMoney)}`;
   $('#fishSub').innerHTML = fishPaid > 0 || fish.active
-    ? `今日帶薪摸魚 <b>${dur(fishPaid)}</b><br>佔今日收入 <b>${fmt(earned ? fishMoney/earned*100 : 0,1)}%</b>${st.k !== 'working' && fish.active ? ' · 非計薪時段不累計' : ''}`
-    : '按下開始，計算你今天的帶薪摸魚收入。<br>上廁所、滑手機、發呆，通通算錢。';
-  $('#fishBtn').textContent = fish.active ? '結束摸魚，回去工作' : '開始摸魚';
+    ? t('fishSub', {t: dur(fishPaid), p: fmt(earned ? fishMoney/earned*100 : 0,1), x: st.k !== 'working' && fish.active ? t('fishOff') : ''})
+    : t('fishEmpty');
+  $('#fishBtn').textContent = fish.active ? t('fishStop') : t('fishStart');
 
   // celebration
-  if (lastStatus === 'working' && st.k === 'after'){ confetti(); toast(`下班啦！今日入帳 ${money(earned)}`); }
+  if (lastStatus === 'working' && st.k === 'after'){ confetti(); toast(t('tOffWork', {v: money(earned)})); }
   lastStatus = st.k;
 
-  if (document.body.classList.contains('stealth')){ document.title = '季度報告_最終版_v3'; }
+  if (document.body.classList.contains('stealth')){ document.title = t('bossDoc'); }
   else if (Date.now() - lastTitle > 900){
-    document.title = st.k === 'working' || st.k === 'lunch' ? `${money(earned)} · 薪跳` : `${st.label} · 薪跳 PayPulse`;
+    document.title = st.k === 'working' || st.k === 'lunch' ? t('liveDoc', {v: money(earned)}) : t('idleDoc', {s: st.label});
     lastTitle = Date.now();
   }
 }
 
-function quip(st, earned, daily, rate, next, unlocked, now){
+function quip(st, earned, daily, rate, next, now){
   const e = s => `<em class="money">${s}</em>`;
-  if (st.k === 'rest') return `今天是休假日，薪水也在休息。下個工作日預計入帳 ${e(money(dailyWage(nextShift(now) || now)))}。`;
-  if (st.k === 'before') return `還沒上班，今天預計入帳 ${e(money(daily))}。深呼吸，等一下就開始賺了。`;
-  if (st.k === 'after'){
-    const tea = D.goals[0];
-    return `今日收工，入帳 ${e(money(earned))}，相當於 ${e(Math.floor(earned/tea.price))} 杯珍珠奶茶。你值得。`;
-  }
-  if (st.k === 'lunch') return `午休時間不計薪，但吃飽才有力氣賺錢。目前已入帳 ${e(money(earned))}。`;
-  if (next && next.g.price <= daily) return `再上班 ${e(dur((next.g.price - earned)/rate))}，就賺回${next.g.name}。`;
-  if (next) return `今日戰利品全數到手！下一站：${next.g.name}，大約 ${e(Math.ceil(next.g.price/daily))} 個工作天。`;
-  return `每一秒，都在為你入帳。`;
+  if (st.k === 'rest') return t('qRest', {v: e(money(dailyWage(nextShift(now) || now)))});
+  if (st.k === 'before') return t('qBefore', {v: e(money(daily))});
+  if (st.k === 'after') return t('qAfter', {v: e(money(earned)), n: e(fmt(Math.floor(earned / D.goals[0].price), 0))});
+  if (st.k === 'lunch') return t('qLunch', {v: e(money(earned))});
+  if (next && next.g.price <= daily) return t('qNext', {t: e(dur((next.g.price - earned)/rate)), n: next.g.name});
+  if (next) return t('qAll', {n: next.g.name, d: e(Math.ceil(next.g.price/daily))});
+  return t('qDefault');
 }
 
 /* ---------- effects ---------- */
@@ -638,8 +777,8 @@ function floatPlus(n){
 }
 let toastT;
 function toast(msg){
-  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600);
+  const el = $('#toast'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2600);
 }
 function confetti(){
   const c = $('#confetti'), ctx = c.getContext('2d'), dpr = devicePixelRatio || 1;
@@ -651,12 +790,12 @@ function confetti(){
     rot: Math.random()*6, vr: (Math.random()-.5)*.3, c: cols[Math.random()*cols.length|0]
   }));
   const t0 = performance.now();
-  (function frame(t){
+  (function frame(now){
     ctx.clearRect(0,0,innerWidth,innerHeight);
     ps.forEach(p => { p.vy += .32; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
-      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle = p.c; ctx.globalAlpha = Math.max(0, 1-(t-t0)/3600);
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle = p.c; ctx.globalAlpha = Math.max(0, 1-(now-t0)/3600);
       ctx.fillRect(-p.r/2,-p.r/4,p.r,p.r/2); ctx.restore(); });
-    if (t - t0 < 3600) requestAnimationFrame(frame); else ctx.clearRect(0,0,innerWidth,innerHeight);
+    if (now - t0 < 3600) requestAnimationFrame(frame); else ctx.clearRect(0,0,innerWidth,innerHeight);
   })(t0);
 }
 function renderTicks(){
@@ -664,60 +803,114 @@ function renderTicks(){
   const L = $('#lunchSeg');
   if (cfg.lunch && D.L2 > D.L1){
     L.style.display = ''; L.style.left = (D.L1-D.startS)/span*100 + '%'; L.style.width = (D.L2-D.L1)/span*100 + '%';
-    L.title = cfg.lunchPaid ? '午休（計薪）' : '午休（不計薪）';
   } else L.style.display = 'none';
-  const ticks = [[0,cfg.start]];
-  if (cfg.lunch && D.L2 > D.L1) ticks.push([(D.L1-D.startS)/span, cfg.lunchStart], [(D.L2-D.startS)/span, cfg.lunchEnd]);
-  ticks.push([1,cfg.end]);
-  $('#ticks').innerHTML = ticks.map(([p,t]) => `<span style="left:${p*100}%">${t}</span>`).join('');
+  const ticks = [[0,hm(cfg.start)]];
+  if (cfg.lunch && D.L2 > D.L1){
+    const a = (D.L1-D.startS)/span, b = (D.L2-D.startS)/span;
+    // 午休太短時兩個時間會疊在一起，合成一個「12:00–12:30」放在中間
+    if (b - a < (lang === 'en' ? .16 : .1)) ticks.push([(a+b)/2, hmRange(cfg.lunchStart, cfg.lunchEnd)]);
+    else ticks.push([a, hm(cfg.lunchStart)], [b, hm(cfg.lunchEnd)]);
+  }
+  ticks.push([1,hm(cfg.end)]);
+  $('#ticks').innerHTML = ticks.map(([p,x]) => `<span style="left:${p*100}%">${x}</span>`).join('');
 }
+
+/* ---------- 靜態文字 ---------- */
+function applyStatic(){
+  const h = document.documentElement;
+  h.lang = lang === 'en' ? 'en' : 'zh-Hant-TW';
+  h.dataset.lang = lang;
+  document.querySelectorAll('[data-i]').forEach(el => { el.textContent = t(el.dataset.i); });
+  document.querySelectorAll('[data-ih]').forEach(el => { el.innerHTML = t(el.dataset.ih); });
+  document.querySelectorAll('[data-ia]').forEach(el => { const [a,k] = el.dataset.ia.split(':'); el.setAttribute(a, t(k)); });
+  document.querySelectorAll('[data-lang-set]').forEach(b => { const on = b.dataset.langSet === lang; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+  $('#fCur').innerHTML = Object.entries(CUR).map(([k,v]) => `<option value="${k}">${v[lang]}${lang === 'zh' ? `（${v.sym}）` : ''}</option>`).join('');
+  $('#fDays').innerHTML = [1,2,3,4,5,6,0].map(d => `<button type="button" data-d="${d}">${T[lang].week[d]}</button>`).join('');
+}
+
+/* ---------- 切換語言：字先變成點，再解成另一種語言 ---------- */
+let switching = false;
+function glyphs(els, from, to, ms, out){
+  return new Promise(res => {
+    const ranks = els.map((el,i) => [...(out ? from[i] : to[i])].map(() => Math.random()));
+    const t0 = performance.now();
+    (function frame(now){
+      const p = Math.min(1, (now - t0)/ms);
+      els.forEach((el,i) => {
+        const chars = [...(out ? from[i] : to[i])];
+        el.textContent = chars.map((c,j) => /\s/.test(c) ? c : (out ? ranks[i][j] < p : ranks[i][j] >= p) ? '·' : c).join('');
+      });
+      // 用計時器不用 requestAnimationFrame：分頁在背景時 rAF 會暫停，語言就卡在一半
+      if (p < 1) setTimeout(() => frame(performance.now()), 16); else res();
+    })(t0);
+  });
+}
+async function setLang(l){
+  if (l === lang || switching) return;
+  store.set(LKEY, l);
+  const u = new URL(location.href); u.searchParams.set('lang', l); history.replaceState(null, '', u);
+  const els = reduced ? [] : [...document.querySelectorAll('[data-i]')].filter(el => el.offsetParent !== null && el.textContent.trim());
+  switching = true;
+  const open = modal.classList.contains('open');
+  if (open && saved) readForm();   // 先記下正在填的內容，下面重畫選單會清掉
+  if (els.length) await glyphs(els, els.map(el => el.textContent), null, 200, true);
+  lang = l;
+  if (!saved) cfg = {...DEFS[lang]};   // 還沒存過設定：換成這個語言的預設值（例如英文用美元）
+  applyStatic(); applyCfg(false);
+  if (open){ if (!saved) form = JSON.parse(JSON.stringify(cfg)); fillForm(); }
+  if (els.length) await glyphs(els, null, els.map(el => el.textContent), 260, false);
+  switching = false;
+}
+document.querySelectorAll('[data-lang-set]').forEach(b => b.addEventListener('click', () => setLang(b.dataset.langSet)));
 
 /* ---------- settings modal ---------- */
 const modal = $('#modal');
-let form = {};
-$('#fCur').innerHTML = Object.entries(CUR).map(([k,v]) => `<option value="${k}">${v.name}（${v.sym}）</option>`).join('');
-$('#fDays').innerHTML = [1,2,3,4,5,6,0].map(d => `<button type="button" data-d="${d}">${WEEK[d]}</button>`).join('');
+let form = {}, welcome = false;
 
-function openModal(welcome){
+function openModal(isWelcome){
+  welcome = isWelcome;
   form = JSON.parse(JSON.stringify(cfg));
-  $('#mTitle').textContent = welcome ? '歡迎使用薪跳' : '薪資設定';
-  $('#mLead').textContent = welcome ? '先花 10 秒設定你的薪資與工時，接下來的每一秒，都會即時為你入帳。' : '設定完成後，薪跳會依照你的工時，每一秒為你即時入帳。';
+  fillForm();
+  modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
+  setTimeout(() => $('#fSalary').focus(), 120);
+}
+function fillForm(){
+  $('#mTitle').textContent = t(welcome ? 'mTitleWelcome' : 'mTitle');
+  $('#mLead').textContent = t(welcome ? 'leadWelcome' : 'lead');
   $('#fSalary').value = form.salary;
   $('#fCur').value = form.currency;
   $('#fStart').value = form.start; $('#fEnd').value = form.end;
   $('#fLunch').checked = form.lunch; $('#fLunchPaid').checked = form.lunchPaid;
   $('#fLunchStart').value = form.lunchStart; $('#fLunchEnd').value = form.lunchEnd;
   syncForm();
-  modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
-  setTimeout(() => $('#fSalary').focus(), 120);
 }
-function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
+function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); store.set(SEEN, '1'); }
 function readForm(){
   form.salary = parseFloat($('#fSalary').value);
   form.currency = $('#fCur').value;
   form.start = $('#fStart').value; form.end = $('#fEnd').value;
   form.lunch = $('#fLunch').checked; form.lunchPaid = $('#fLunchPaid').checked;
   form.lunchStart = $('#fLunchStart').value; form.lunchEnd = $('#fLunchEnd').value;
-  if (!(form.salary > 0)) return '請輸入大於 0 的薪資金額';
-  if (!form.start || !form.end || t2s(form.end) <= t2s(form.start)) return '下班時間需晚於上班時間';
-  if (form.lunch && (t2s(form.lunchEnd) <= t2s(form.lunchStart))) return '午休結束時間需晚於開始時間';
-  if (!form.workdays.length) return '請至少選擇一個工作日';
+  if (!(form.salary > 0)) return t('errSalary');
+  if (!form.start || !form.end || t2s(form.end) <= t2s(form.start)) return t('errTime');
+  if (form.lunch && (t2s(form.lunchEnd) <= t2s(form.lunchStart))) return t('errLunch');
+  if (!form.workdays.length) return t('errDays');
   return '';
 }
 function syncForm(){
   document.querySelectorAll('#fMode button').forEach(b => b.classList.toggle('on', b.dataset.v === form.mode));
   document.querySelectorAll('#fDays button').forEach(b => b.classList.toggle('on', form.workdays.includes(+b.dataset.d)));
-  $('#fSalaryLbl').textContent = form.mode === 'monthly' ? '月薪' : '時薪';
+  $('#fSalaryLbl').textContent = t(form.mode === 'monthly' ? 'salaryMonthly' : 'salaryHourly');
   $('#lunchFields').classList.toggle('off', !$('#fLunch').checked);
   const err = readForm();
   $('#fSym').textContent = CUR[form.currency].sym;
   $('#fErr').textContent = err;
-  if (err){ $('#fPreview').innerHTML = '填寫完整後，這裡會顯示換算結果。'; return; }
-  const saved = cfg; cfg = form; derive();
+  if (err){ $('#fPreview').innerHTML = t('previewEmpty'); return; }
+  const keep = cfg; cfg = form; derive();
   const now = new Date(), daily = dailyWage(now), rate = D.paidDay ? daily/D.paidDay : 0;
   const n = workdaysIn(now.getFullYear(), now.getMonth());
-  $('#fPreview').innerHTML = `每日計薪 <b>${fmt(D.paidDay/3600)}</b> 小時 · 本月 <b>${n}</b> 個工作日<br>時薪 <b>${money(rate*3600)}</b> · 日薪 <b>${money(daily)}</b> · 每秒 <b>${shortRate(rate)}</b>`;
-  cfg = saved; derive();
+  $('#fPreview').innerHTML = t('preview', {h: fmt(D.paidDay/3600), n, hr: money(rate*3600), d: money(daily), s: shortRate(rate)});
+  cfg = keep; derive();
 }
 $('#fMode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; form.mode = b.dataset.v; syncForm(); });
 $('#fDays').addEventListener('click', e => {
@@ -726,22 +919,22 @@ $('#fDays').addEventListener('click', e => {
   syncForm();
 });
 ['#fSalary','#fCur','#fStart','#fEnd','#fLunch','#fLunchPaid','#fLunchStart','#fLunchEnd'].forEach(s => $(s).addEventListener('input', syncForm));
-$('#mCancel').addEventListener('click', () => { if (firstVisit && !localStorage.getItem(KEY)) localStorage.setItem(KEY, JSON.stringify(cfg)); closeModal(); });
+$('#mCancel').addEventListener('click', closeModal);
 $('#mSave').addEventListener('click', () => {
   const err = readForm(); if (err){ $('#fErr').textContent = err; return; }
   cfg = JSON.parse(JSON.stringify(form));
-  localStorage.setItem(KEY, JSON.stringify(cfg));
-  applyCfg(); closeModal(); toast('設定已儲存，開始為你入帳');
+  store.set(KEY, JSON.stringify(cfg)); saved = true;
+  applyCfg(true); closeModal(); toast(t('tSaved'));
 });
 modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
 
-function applyCfg(){ derive(); buildGoals(); renderTicks(); lastInt = null; lastUnlocked = null; tick(); }
+function applyCfg(resetMoney){ derive(); buildGoals(); renderTicks(); if (resetMoney) lastInt = null; lastUnlocked = null; tick(); }
 
 /* ---------- controls ---------- */
 function toggleBoss(){
   const on = document.body.classList.toggle('stealth');
   $('#bossBtn').classList.toggle('on', on);
-  toast(on ? '老闆鍵啟動，金額已隱藏' : '金額已恢復顯示');
+  toast(t(on ? 'tBossOn' : 'tBossOff'));
   lastTitle = 0; tick();
 }
 $('#bossBtn').addEventListener('click', toggleBoss);
@@ -755,9 +948,11 @@ document.addEventListener('keydown', e => {
   if (e.key === 's' || e.key === 'S') openModal(false);
 });
 
-applyCfg();
+applyStatic();
+applyCfg(true);
+document.documentElement.classList.add('i18n');
 setInterval(tick, 60);
-if (firstVisit) setTimeout(() => openModal(true), 500);
+if (!saved && !store.get(SEEN)) setTimeout(() => openModal(true), 500);
 })();
 </script>
 </body>
